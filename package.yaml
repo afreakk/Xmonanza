@@ -1,0 +1,67 @@
+name:                xmonanza
+version:             0.1.0.0
+github:              "afreak/xmonanza"
+license:             BSD3
+author:              "Afreak"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/afreakk/xmonanza#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  dependencies:
+    - directory
+
+executables:
+  xmonad-afreak:
+    main:                Main.hs
+    source-dirs:         xmonad
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -fwarn-tabs
+    - -O2
+    dependencies:
+    - containers
+    - xmonanza
+    - X11
+    - xmonad
+    - xmonad-contrib
+  xmobar-afreak:
+    main:                Main.hs
+    source-dirs:         xmobar
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    - -fwarn-tabs
+    - -O2
+    dependencies:
+    - xmobar
+    - xmonanza
+
+tests:
+  xmonanza-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - xmonanza

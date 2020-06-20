@@ -1,0 +1,75 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           xmonanza
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/xmonanza#readme>
+homepage:       https://github.com/afreak/xmonanza#readme
+bug-reports:    https://github.com/afreak/xmonanza/issues
+author:         Afreak
+maintainer:     Afreak
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/afreak/xmonanza
+
+library
+  exposed-modules:
+      AConfig
+  other-modules:
+      Paths_xmonanza
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , directory
+  default-language: Haskell2010
+
+executable xmobar-afreak
+  main-is: Main.hs
+  other-modules:
+      Paths_xmonanza
+  hs-source-dirs:
+      xmobar
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -fwarn-tabs -O2
+  build-depends:
+      base >=4.7 && <5
+    , xmobar
+    , xmonanza
+  default-language: Haskell2010
+
+executable xmonad-afreak
+  main-is: Main.hs
+  other-modules:
+      Paths_xmonanza
+  hs-source-dirs:
+      xmonad
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -fwarn-tabs -O2
+  build-depends:
+      X11
+    , base >=4.7 && <5
+    , containers
+    , xmonad
+    , xmonad-contrib
+    , xmonanza
+  default-language: Haskell2010
+
+test-suite xmonanza-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_xmonanza
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , xmonanza
+  default-language: Haskell2010
