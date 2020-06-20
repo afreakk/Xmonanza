@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           xmonanza
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/xmonanza#readme>
+description:    Please see the README on GitHub at <https://github.com/afreakk/xmonanza#readme>
 homepage:       https://github.com/afreak/xmonanza#readme
 bug-reports:    https://github.com/afreak/xmonanza/issues
 author:         Afreak
