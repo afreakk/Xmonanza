@@ -35,25 +35,28 @@ myXPConfig = def
     , autoComplete        = Nothing
     }
 
+cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
+cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
+cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
 myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
-    [ ((modm .|. shiftMask, xK_Return), spawn $ XM.terminal conf)
-    , ((modm, xK_r      ), renameWorkspace myXPConfig)
+    [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
+    , ((shiftMask,      xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
+    , ((0,              xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
+    , ((modm,           xK_Print ), spawn $ cmdMaimSelect "~/img.png")
       -- XF86AudioRaiseVolume
-    , ((0, 0x1008ff13), spawn "~/bin/setSinkVolumeDefault.sh +5%")
+    , ((0,            0x1008ff13 ), spawn $ cmdSetVolume "+5%")
       -- XF86AudioLowerVolume
-    , ((0, 0x1008ff11), spawn "~/bin/setSinkVolumeDefault.sh -5%")
-    , ((0, xK_Print ), spawn "maim --select --hidecursor --format png /dev/stdout | xclip -selection clipboard -t image/png -i")
-    , ((modm, xK_Print ), spawn "maim --select --hidecursor --format png ~/img.png")
-    , ((shiftMask, xK_Print ), spawn "maim -s --hidecursor --format png /dev/stdout | xclip -selection clipboard -t image/png -i && xclip -selection clipboard -t image/png -o | feh -")
-    , ((modm, xK_o ), spawn "xmodmap ~/.Xmodmap")
-    , ((modm, xK_p ), spawn "clipmenu")
-    , ((modm, xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
-    , ((modm, xK_f ), spawn "~/bin/dwmwindowselector.sh")
-    , ((modm, xK_y ), spawn "~/bin/terminal.sh")
-    , ((modm, xK_w ), spawn "~/bin/runner.sh")
+    , ((0,            0x1008ff11 ), spawn $ cmdSetVolume "-5%")
+    , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
+    , ((modm,               xK_p ), spawn "clipmenu")
+    , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
+    , ((modm,               xK_f ), spawn "~/bin/dwmwindowselector.sh")
+    , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
+    , ((modm,               xK_w ), spawn "~/bin/runner.sh")
+    , ((modm,               xK_r ), renameWorkspace myXPConfig)
     , ((modm,               xK_q ), kill)
     , ((modm,               xK_d ), sendMessage NextLayout)
     --  Reset the layouts on the current workspace to default
@@ -89,7 +92,7 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- Restart xmonad
     , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_h ), spawn ("echo \"" ++ help ++ "\" | dmenu -l 42"))
+    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/xmonanza/xmonad/Main.hs | dmenu -l 42"))
     ]
     ++
     [((m .|. modm, k), f i)
