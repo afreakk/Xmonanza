@@ -96,7 +96,7 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     ]
     ++
     [((m .|. modm, k), f i)
-        | (i, k) <- zip (XM.workspaces conf) [xK_1 .. xK_9]
+        | (i, k) <- zip workspaceNames workspaceKeys
         , (f, m) <- [(toggleOrView, 0), ((windows . W.shift), shiftMask)]]
     -- ++
     -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
@@ -105,6 +105,9 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
     --     | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
     --     , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+
+workspaceNames = map show $ [1..9] ++ [0]
+workspaceKeys = [xK_1..xK_9] ++ [xK_0]
 
 promote :: X ()
 promote = windows $ SS.modify' $
@@ -239,7 +242,7 @@ defaults xmobarproc = def {
       -- A tagging example:
       --
       -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
-        XM.workspaces      = ["Web","2","3","4","5","6","7","8","Chat"],
+        XM.workspaces      = workspaceNames,
         normalBorderColor  = cl_black getConfig,
         focusedBorderColor = cl_grey getConfig,
       -- key bindings
