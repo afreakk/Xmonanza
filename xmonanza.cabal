@@ -37,7 +37,7 @@ executable xmobar-afreak
       Paths_xmonanza
   hs-source-dirs:
       xmobar
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -fwarn-tabs -O2
+  ghc-options: -Wall -fwarn-tabs -O2
   build-depends:
       base >=4.7 && <5
     , xmobar
