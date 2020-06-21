@@ -35,11 +35,11 @@ config cnf =
                       , Run $ MultiCoreTemp [ "--low", cl_aqua cnf, "--normal",cl_aqua cnf,"--high",cl_red cnf, "-t", "<avg>°C"] 50
                       , Run $ CatInt 0 "/sys/devices/platform/nct6775.2592/hwmon/hwmon3/fan2_input" [
                         "-L", "0", "-H", "1082", "--normal",cl_aqua cnf,"--high",cl_red cnf] 50
-                      , Run $ StdinReader
+                      , Run $ UnsafeStdinReader
                       ]
          , sepChar = "%"
          , alignSep = "}{"
-         , template = "%StdinReader%}\
+         , template = "%UnsafeStdinReader%}\
                       \{<icon=volume.xpm/> %alsa:default:Master% | %enp0s31f6% | <icon=memory.xpm/> %memory% | <icon=cpu.xpm/> %multicpu% %multicoretemp% %cat0% | <icon=gpu.xpm/> %gputemp%°C | <fc=" ++ cl_lilly cnf ++ ">%date%</fc>"
          }
 
