@@ -21,8 +21,8 @@ dependencies:
 
 library:
   source-dirs: src
-  dependencies:
-    - directory
+  # dependencies:
+  #   - directory
 
 executables:
   xmonad-afreak:
