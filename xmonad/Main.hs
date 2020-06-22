@@ -153,7 +153,7 @@ myTabConfig = def
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = (renamed [Replace "B"](tabbedBottom shrinkText myTabConfig )) ||| renamed [Replace "T"] tiled ||| renamed [Replace "MT"] (Mirror tiled)
+myLayout = (tabbedBottom shrinkText myTabConfig) ||| tiled ||| Mirror tiled
   where
      -- default tiling algorithm partitions the screen into two panes
      tiled   = Tall nmaster delta ratio
@@ -209,6 +209,7 @@ myLogHook xmproc = do
     , ppHidden  = clickableWs
     , ppTitle   = xmobarColor (cl_lilly getConfig) "" . shorten 45
     , ppUrgent  = xmobarColor (cl_aqua  getConfig) "" . clickableWs
+    , ppOrder   = \(ws:layout:title:_) -> [ws,title]
     , ppSep = " | "
     } >>= dynamicLogWithPP
 
