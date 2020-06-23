@@ -9,11 +9,11 @@ import XMonad.Layout.NoBorders
 import XMonad.Hooks.EwmhDesktops
 import XMonad.StackSet as SS
 import XMonad.Hooks.UrgencyHook
-import XMonad.Layout.Renamed
 import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
 
 import AConfig (getConfig, AConfig (..))
+import XmobarUtils (xmobarShorten)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -106,7 +106,7 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     --     | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
     --     , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
-workspaceNames = map show $ [1..9] ++ [0]
+workspaceNames = map show $ [1..9 :: Int] ++ [0]
 workspaceKeys = [xK_1..xK_9] ++ [xK_0]
 
 promote :: X ()
@@ -204,12 +204,12 @@ clickableWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
 --
 myLogHook xmproc = do
   workspaceNamesPP xmobarPP
-    { ppOutput  = hPutStrLn xmproc
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten 100
     , ppCurrent = xmobarColor (cl_lilly getConfig) ""
     , ppHidden  = clickableWs
-    , ppTitle   = xmobarColor (cl_lilly getConfig) "" . shorten 45
+    , ppTitle   = xmobarColor (cl_lilly getConfig) ""
     , ppUrgent  = xmobarColor (cl_aqua  getConfig) "" . clickableWs
-    , ppOrder   = \(ws:layout:title:_) -> [ws,title]
+    , ppOrder   = \(wsNames:layoutName:windowTitle:_) -> [wsNames,windowTitle]
     , ppSep = " | "
     } >>= dynamicLogWithPP
 
