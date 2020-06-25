@@ -19,7 +19,7 @@ getConfig = AConfig
   , cl_aqua  = "#66CCCC"
   , cl_lilly = "#CC99CC"
   , cl_font  = "xft:Hack:size=14:Regular:antialias=true"
-  , cl_iconRoot="/home/afreak/icons"
+  , cl_iconRoot="/home/afreak/icons/"
   , cl_barHeight=25
   }
 

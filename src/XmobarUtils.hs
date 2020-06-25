@@ -1,18 +1,15 @@
 module XmobarUtils (xmobarShorten) where
 
-
 xmobarShorten :: Int -> String -> String
-xmobarShorten maxLen str
-  | visibleStrLen > maxLen = shortenedStr ++ ".."
-  | otherwise              = shortenedStr
+xmobarShorten maxLen = shorten False "" 0
   where
-    (shortenedStr, visibleStrLen) = shorten False str "" 0
-
-    shorten :: Bool -> String -> String -> Int -> (String, Int)
-    shorten isTag ('<':xs) str idx = shorten True  xs (str++"<")  idx
-    shorten isTag ('>':xs) str idx = shorten False xs (str++">")  idx
-    shorten False (x:xs)   str idx
-      | idx < maxLen               = shorten False xs (str++[x]) (idx+1)
-      | otherwise                  = shorten False xs  str       (idx+1)
-    shorten True (x:xs)    str idx = shorten True  xs (str++[x])  idx
-    shorten isTag []       str idx = (str, idx)
+    shorten :: Bool -> String -> Int -> String -> String
+    shorten isTag str idx ('<':xs) = shorten True  ('<':str) idx    xs
+    shorten isTag str idx ('>':xs) = shorten False ('>':str) idx    xs
+    shorten True  str idx (x:xs)   = shorten True  (x:str)   idx    xs
+    shorten False str idx (x:xs)
+      | idx < maxLen               = shorten False (x:str)  (idx+1) xs
+      | otherwise                  = shorten False str      (idx+1) xs
+    shorten isTag str idx [] 
+      | idx >= maxLen              = reverse $ ".." ++ str
+      | otherwise                  = reverse str

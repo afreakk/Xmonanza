@@ -1,0 +1,12 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "xmonanza:lib"
+    - path: "./test"
+      component: "xmonanza:test:test"
+    - path: "./benchmark"
+      component: "xmonanza:test:benchmark"
+    - path: "./xmonad"
+      component: "xmonanza:exe:xmonad-afreak"
+    - path: "./xmobar"
+      component: "xmonanza:exe:xmobar-afreak"
