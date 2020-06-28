@@ -11,12 +11,14 @@ import XMonad.StackSet as SS
 import XMonad.Hooks.UrgencyHook
 import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
+import XMonad.Layout.WorkspaceDir
 
 import AConfig (getConfig, AConfig (..))
 import XmobarUtils (xmobarShorten)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
+import Data.Char (isLower, isSpace, toLower)
 
 -- Prompt theme
 myXPConfig :: XPConfig
@@ -77,7 +79,7 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_h     ), sendMessage Shrink)
     -- Expand the master area
     , ((modm,               xK_i     ), sendMessage Expand)
-    -- Push window back into tiling
+    -- Push window back into tiling (from float)
     , ((modm,               xK_u     ), withFocused $ windows . W.sink)
     -- Increment the number of windows in the master area
     , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
@@ -93,11 +95,12 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
     , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    , ((modm, xK_c     ), changeDir myXPConfig)
     ]
     ++
     [((m .|. modm, k), f i)
         | (i, k) <- zip workspaceNames workspaceKeys
-        , (f, m) <- [(toggleOrView, 0), ((windows . W.shift), shiftMask)]]
+        , (f, m) <- [(toggleOrView, 0), ((windows . W.shift), shiftMask), (swapWithCurrent, controlMask)]]
     -- ++
     -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
@@ -208,6 +211,7 @@ myLogHook xmproc = do
     , ppCurrent = xmobarColor (cl_lilly getConfig) ""
     , ppHidden  = clickableWs
     , ppTitle   = xmobarColor (cl_lilly getConfig) ""
+    , ppTitleSanitize = Prelude.filter ((\x -> elem x (' ':['a'..'z'])).toLower)
     , ppUrgent  = xmobarColor (cl_aqua  getConfig) "" . clickableWs
     , ppOrder   = \(wsNames:layoutName:windowTitle:_) -> [wsNames,windowTitle]
     , ppSep = " | "
@@ -223,8 +227,8 @@ myLogHook xmproc = do
 myStartupHook = return ()
 
 main = do
-  xmobarproc <- spawnPipe "/home/afreak/.local/bin/xmobar-afreak"
-  xmonad (withUrgencyHook NoUrgencyHook (ewmh (docks (defaults xmobarproc))))
+  xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
+  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . docks $ defaults xmobarproc
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
@@ -254,7 +258,7 @@ defaults xmobarproc = def {
         keys               = myKeys,
         mouseBindings      = myMouseBindings,
       -- hooks, layouts
-        layoutHook         = smartBorders.avoidStruts $ myLayout,
+        layoutHook         = smartBorders.avoidStruts $ workspaceDir "~" $ myLayout,
         manageHook         = myManageHook,
         handleEventHook    = myEventHook,
         logHook            = myLogHook xmobarproc,
