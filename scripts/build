@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # The directory holding your source code and stack.yaml file:
 SRC_DIR=~/coding/xmonanza/
 # The name of the executable produced by stack.  This comes from the

@@ -12,6 +12,13 @@ import XMonad.Hooks.UrgencyHook
 import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
 import XMonad.Layout.WorkspaceDir
+import XMonad.Actions.CopyWindow
+import XMonad.Actions.GridSelect
+import XMonad.Actions.Launcher
+import XMonad.Layout.SubLayouts
+import XMonad.Layout.Simplest
+
+import XMonad.Layout.WindowNavigation
 
 import AConfig (getConfig, AConfig (..))
 import XmobarUtils (xmobarShorten)
@@ -35,8 +42,10 @@ myXPConfig = def
     , historySize         = 100
     , historyFilter       = deleteConsecutive
     , autoComplete        = Nothing
+    , completionKey       = (0,xK_Tab)
     }
 
+launcherConfig = LauncherConfig { pathToHoogle = "stack hoogle" , browser = "qutebrowser"}
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
@@ -59,12 +68,14 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
     , ((modm,               xK_w ), spawn "~/bin/runner.sh")
     , ((modm,               xK_r ), renameWorkspace myXPConfig)
-    , ((modm,               xK_q ), kill)
+    , ((modm,               xK_q ), kill1)
     , ((modm,               xK_d ), sendMessage NextLayout)
+    , ((modm,               xK_g ), goToSelected def)
+    , ((modm,               xK_j ), launcherPrompt myXPConfig $ defaultLauncherModes launcherConfig)
     --  Reset the layouts on the current workspace to default
     , ((modm .|. shiftMask, xK_d ), setLayout $ XM.layoutHook conf)
     -- Resize viewed windows to the correct size
-    , ((modm .|. shiftMask, xK_r     ), refresh)
+    , ((modm .|. shiftMask, xK_t     ), refresh)
     , ((modm,               xK_Tab   ), windows W.focusDown)
     , ((modm,               xK_n     ), windows W.focusDown)
     , ((modm,               xK_e     ), windows W.focusUp  )
@@ -79,6 +90,16 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_h     ), sendMessage Shrink)
     -- Expand the master area
     , ((modm,               xK_i     ), sendMessage Expand)
+    , ((modm .|. controlMask, xK_h), sendMessage $ pullGroup L)
+    , ((modm .|. controlMask, xK_n), sendMessage $ pullGroup D)
+    , ((modm .|. controlMask, xK_e), sendMessage $ pullGroup U)
+    , ((modm .|. controlMask, xK_i), sendMessage $ pullGroup R)
+
+    , ((modm .|. controlMask, xK_m), withFocused (sendMessage . MergeAll))
+    , ((modm .|. controlMask, xK_u), withFocused (sendMessage . UnMerge))
+
+    , ((modm .|. controlMask, xK_period), onGroup W.focusUp')
+    , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
     -- Push window back into tiling (from float)
     , ((modm,               xK_u     ), withFocused $ windows . W.sink)
     -- Increment the number of windows in the master area
@@ -89,6 +110,7 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- Use this binding with avoidStruts from Hooks.ManageDocks.
     -- See also the statusBar function from Hooks.DynamicLog.
     , ((modm              , xK_b     ), sendMessage ToggleStruts)
+    , ((modm .|. shiftMask, xK_r     ), resetWorkspaceNames)
     -- Quit xmonad
     , ((modm .|. shiftMask, xK_grave     ), io (exitWith ExitSuccess))
     -- Restart xmonad
@@ -96,11 +118,17 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
     , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/xmonanza/xmonad/Main.hs | dmenu -l 42"))
     , ((modm, xK_c     ), changeDir myXPConfig)
+    , ((modm, xK_l), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
     ]
     ++
     [((m .|. modm, k), f i)
-        | (i, k) <- zip workspaceNames workspaceKeys
-        , (f, m) <- [(toggleOrView, 0), ((windows . W.shift), shiftMask), (swapWithCurrent, controlMask)]]
+      | (i, k) <- zip workspaceNames workspaceKeys
+      , (f, m) <- [ (toggleOrView, 0)
+                  , (windows . W.shift, shiftMask)
+                  , (swapWithCurrent,   controlMask)
+                  , (windows . copy,    mod1Mask)
+                  ]
+    ]
     -- ++
     -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
@@ -109,7 +137,13 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     --     | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
     --     , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
+resetWorkspaceNames :: X ()
+resetWorkspaceNames = sequence_ $ map (`setWorkspaceName` "") workspaceNames
+
+workspaceNames :: [String]
 workspaceNames = map show $ [1..9 :: Int] ++ [0]
+
+workspaceKeys :: [KeySym]
 workspaceKeys = [xK_1..xK_9] ++ [xK_0]
 
 promote :: X ()
@@ -156,16 +190,19 @@ myTabConfig = def
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = (tabbedBottom shrinkText myTabConfig) ||| tiled ||| Mirror tiled
+myLayout =
+  windowNavigation (addTabsBottom shrinkText myTabConfig (subLayout [] Simplest tiled))
+  |||(tabbedBottom shrinkText myTabConfig)
+  ||| windowNavigation (addTabsBottom shrinkText myTabConfig (subLayout [] Simplest (Mirror tiled)))
   where
-     -- default tiling algorithm partitions the screen into two panes
-     tiled   = Tall nmaster delta ratio
-     -- The default number of windows in the master pane
-     nmaster = 1
-     -- Default proportion of screen occupied by master pane
-     ratio   = 1/2
-     -- Percent of screen to increment by when resizing panes
-     delta   = 3/100
+    -- default tiling algorithm partitions the screen into two panes
+    tiled   = Tall nmaster delta ratio
+    -- The default number of windows in the master pane
+    nmaster = 1
+    -- Default proportion of screen occupied by master pane
+    ratio   = 1/2
+    -- Percent of screen to increment by when resizing panes
+    delta   = 3/100
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -200,18 +237,19 @@ myEventHook = ewmhDesktopsEventHook <+> fullscreenEventHook
 clickableWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
   where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
+xmobarTitleAllowedChars = [' '..'z']
 ------------------------------------------------------------------------
 -- Status bars and logging
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
 myLogHook xmproc = do
-  workspaceNamesPP xmobarPP
+  workspaceNamesPP def
     { ppOutput  = hPutStrLn xmproc . xmobarShorten 100
     , ppCurrent = xmobarColor (cl_lilly getConfig) ""
     , ppHidden  = clickableWs
     , ppTitle   = xmobarColor (cl_lilly getConfig) ""
-    , ppTitleSanitize = Prelude.filter ((\x -> elem x (' ':['a'..'z'])).toLower)
+    , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
     , ppUrgent  = xmobarColor (cl_aqua  getConfig) "" . clickableWs
     , ppOrder   = \(wsNames:layoutName:windowTitle:_) -> [wsNames,windowTitle]
     , ppSep = " | "
@@ -237,7 +275,7 @@ main = do
 defaults xmobarproc = def {
       -- simple stuff
         terminal           = "alacritty",
-        focusFollowsMouse  = True,
+        focusFollowsMouse  = False,
       -- Whether clicking on a window to focus also passes the click to the window
         clickJustFocuses   = False,
       -- Width of the window border in pixels.
