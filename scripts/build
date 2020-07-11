@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # The directory holding your source code and stack.yaml file:
-SRC_DIR=~/coding/xmonanza/
+SRC_DIR=~/coding/Xmonanza/
 # The name of the executable produced by stack.  This comes from the
 # executable section of your *.cabal or package.yaml file.
 EXE_NAME=xmonad-afreak
