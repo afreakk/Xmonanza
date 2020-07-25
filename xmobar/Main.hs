@@ -26,10 +26,13 @@ cmds cnf =
      "-t", "<avg>°C"] 50
   , Run $ UnsafeStdinReader
   , Run $ BatteryP ["BAT0"]
-    ["-t", "<acstatus><left>% <timeleft> <watts>",
+    ["-t", "<leftipat>",
      "-L", "10", "-H", "80", "-p", "3",
      "--",
      "-O", "\xf58e", "-o", "\xf58b", "-i", "",
+     "--on-icon-pattern", "<acstatus><left>% <timeleft> <watts>",
+     "--off-icon-pattern", "<acstatus><left>% <timeleft> <watts>",
+     "--idle-icon-pattern", "\xf578",
      "-L", "-20", "-H", "-10",
      "-l", cl_grey cnf, "-m", cl_aqua cnf, "-h", cl_red cnf, "-p", cl_green cnf,
      "-a", "notify-send -u critical 'Battery running out!!'",

@@ -24,6 +24,7 @@ import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 import Calculator (calculatorPrompt)
 import BackAndForth (backAndForth)
+import ExtraKeyCodes
 
 -- Prompt theme
 myXPConfig :: XPConfig
@@ -43,6 +44,7 @@ myXPConfig = def
     , completionKey       = (0,xK_Tab)
     }
 
+cmdBrightness arg = "brightnessctl set " ++ arg
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
@@ -51,14 +53,14 @@ cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 --
 myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
+    , ((0,            xK_XF86AudioRaiseVolume  ), spawn $ cmdSetVolume "+5%")
+    , ((0,            xK_XF86AudioLowerVolume  ), spawn $ cmdSetVolume "-5%")
+    , ((0,            xK_XF86MonBrightnessDown ), spawn $ cmdBrightness "5%-")
+    , ((0,            xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "+5%")
     , ((shiftMask,      xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ((0,              xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
     , ((modm,           xK_Print ), spawn $ cmdMaimSelect "~/img.png")
-      -- XF86AudioRaiseVolume
-    , ((0,            0x1008ff13 ), spawn $ cmdSetVolume "+5%")
-      -- XF86AudioLowerVolume
-    , ((0,            0x1008ff11 ), spawn $ cmdSetVolume "-5%")
-    , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
+    -- , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
     , ((modm,               xK_p ), spawn "clipmenu")
     , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
     , ((modm,               xK_f ), spawn "~/bin/windowselector.sh")
