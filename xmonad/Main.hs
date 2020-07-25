@@ -1,6 +1,5 @@
 import XMonad as XM
 import System.Exit
-import XMonad.Actions.CycleWS
 import XMonad.Hooks.DynamicLog
 import XMonad.Util.Run
 import XMonad.Hooks.ManageDocks
@@ -13,11 +12,9 @@ import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
 import XMonad.Layout.WorkspaceDir
 import XMonad.Actions.CopyWindow
-import XMonad.Actions.GridSelect
-import XMonad.Actions.Launcher
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Simplest
-
+import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 import XMonad.Layout.WindowNavigation
 
 import AConfig (getConfig, AConfig (..))
@@ -25,7 +22,8 @@ import XmobarUtils (xmobarShorten)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
-import Data.Char (isLower, isSpace, toLower)
+import Calculator (calculatorPrompt)
+import BackAndForth (backAndForth)
 
 -- Prompt theme
 myXPConfig :: XPConfig
@@ -45,7 +43,6 @@ myXPConfig = def
     , completionKey       = (0,xK_Tab)
     }
 
-launcherConfig = LauncherConfig { pathToHoogle = "stack hoogle" , browser = "qutebrowser"}
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
@@ -64,14 +61,15 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
     , ((modm,               xK_p ), spawn "clipmenu")
     , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
-    , ((modm,               xK_f ), spawn "~/bin/dwmwindowselector.sh")
+    , ((modm,               xK_f ), spawn "~/bin/windowselector.sh")
     , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
     , ((modm,               xK_w ), spawn "~/bin/runner.sh")
     , ((modm,               xK_r ), renameWorkspace myXPConfig)
     , ((modm,               xK_q ), kill1)
     , ((modm,               xK_d ), sendMessage NextLayout)
-    , ((modm,               xK_g ), goToSelected def)
-    , ((modm,               xK_j ), launcherPrompt myXPConfig $ defaultLauncherModes launcherConfig)
+    -- , ((modm,               xK_g ), goToSelected def)
+    , ((modm,               xK_g ), spawn "clipmenu")
+    , ((modm,               xK_a ), calculatorPrompt myXPConfig )
     --  Reset the layouts on the current workspace to default
     , ((modm .|. shiftMask, xK_d ), setLayout $ XM.layoutHook conf)
     -- Resize viewed windows to the correct size
@@ -96,12 +94,12 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. controlMask, xK_i), sendMessage $ pullGroup R)
 
     , ((modm .|. controlMask, xK_m), withFocused (sendMessage . MergeAll))
-    , ((modm .|. controlMask, xK_u), withFocused (sendMessage . UnMerge))
+    , ((modm .|. controlMask, xK_x), withFocused (sendMessage . UnMerge))
 
     , ((modm .|. controlMask, xK_period), onGroup W.focusUp')
     , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
     -- Push window back into tiling (from float)
-    , ((modm,               xK_u     ), withFocused $ windows . W.sink)
+    , ((modm,               xK_x     ), withFocused $ windows . W.sink)
     -- Increment the number of windows in the master area
     , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
     -- Deincrement the number of windows in the master area
@@ -116,26 +114,26 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- Restart xmonad
     , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
     , ((modm, xK_c     ), changeDir myXPConfig)
-    , ((modm, xK_l), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
+    , ((modm, xK_z), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
     ]
     ++
     [((m .|. modm, k), f i)
       | (i, k) <- zip workspaceNames workspaceKeys
-      , (f, m) <- [ (toggleOrView, 0)
+      , (f, m) <- [ (backAndForth, 0)
                   , (windows . W.shift, shiftMask)
                   , (swapWithCurrent,   controlMask)
                   , (windows . copy,    mod1Mask)
                   ]
     ]
-    -- ++
+    ++
     -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
     --
-    -- [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-    --     | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
-    --     , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
+        | (key, sc) <- zip [xK_l, xK_u] [0..]
+        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 resetWorkspaceNames :: X ()
 resetWorkspaceNames = sequence_ $ map (`setWorkspaceName` "") workspaceNames
@@ -237,22 +235,24 @@ myEventHook = ewmhDesktopsEventHook <+> fullscreenEventHook
 clickableWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
   where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
-xmobarTitleAllowedChars = [' '..'z']
+xmobarTitleAllowedChars = [' '..'~']
 ------------------------------------------------------------------------
 -- Status bars and logging
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
 myLogHook xmproc = do
+  workspaceHistoryHook
   workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten 100
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten 64
     , ppCurrent = xmobarColor (cl_lilly getConfig) ""
     , ppHidden  = clickableWs
     , ppTitle   = xmobarColor (cl_lilly getConfig) ""
     , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
     , ppUrgent  = xmobarColor (cl_aqua  getConfig) "" . clickableWs
     , ppOrder   = \(wsNames:layoutName:windowTitle:_) -> [wsNames,windowTitle]
-    , ppSep = " | "
+    , ppSep     = " | "
+    , ppVisible = xmobarColor (cl_green getConfig) ""
     } >>= dynamicLogWithPP
 
 ------------------------------------------------------------------------
@@ -296,7 +296,7 @@ defaults xmobarproc = def {
         keys               = myKeys,
         mouseBindings      = myMouseBindings,
       -- hooks, layouts
-        layoutHook         = smartBorders.avoidStruts $ workspaceDir "~" $ myLayout,
+        layoutHook         = smartBorders.avoidStruts $ workspaceDir "/home/afreak/" $ myLayout,
         manageHook         = myManageHook,
         handleEventHook    = myEventHook,
         logHook            = myLogHook xmobarproc,
