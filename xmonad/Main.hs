@@ -60,6 +60,11 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((shiftMask,      xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ((0,              xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
     , ((modm,           xK_Print ), spawn $ cmdMaimSelect "~/img.png")
+
+    , ((modm .|. shiftMask, xK_k ), spawn "dunstctl history-pop")
+    , ((modm              , xK_k ), spawn "dunstctl context")
+    , ((modm              , xK_v ), spawn "dunstctl close")
+    , ((modm .|. shiftMask, xK_v ), spawn "dunstctl close-all")
     -- , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
     , ((modm,               xK_p ), spawn "clipmenu")
     , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
@@ -218,7 +223,10 @@ myLayout =
 -- To match on the WM_NAME, you can use 'title' in the same way that
 -- 'className' and 'resource' are used below.
 --
-myManageHook = composeAll []
+myManageHook :: ManageHook
+myManageHook = composeAll [ className =? "qutebrowser" --> unfloat ]
+    where unfloat = ask >>= doF . W.sink
+-- myManageHook = composeAll
     -- [ className =? "MPlayer"        --> doFloat
     -- , className =? "Gimp"           --> doFloat
     -- , resource  =? "desktop_window" --> doIgnore
