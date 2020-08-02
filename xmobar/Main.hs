@@ -6,39 +6,74 @@ import AConfig (getConfig, AConfig (..))
 
 cmds :: AConfig -> [Runnable]
 cmds cnf = 
-  [ Run $ Network "wlp58s0"
-    ["-L","0","-H","32000", "-m", "3",
-     "--normal",cl_grey cnf,"--high",cl_red cnf,
-     "-t", "<rx>KB /<tx>KB"] 50
+  [ Run $ DynNetwork
+    ["-L", "0",
+     "-H", "32000",
+     "--normal", cl_grey cnf,
+     "--high",cl_red cnf,
+     "-t", "<rxvbar> <txvbar>"
+    ] 50
   , Run $ MultiCpu
-    ["--low", cl_aqua cnf, "--normal", cl_grey cnf,"--high",cl_red cnf,
-     "-t", "<total>%"] 50
+    ["-L", "0",
+     "--minwidth", "2",
+     "--low", cl_aqua cnf,
+     "--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "-t", "<total>%"
+    ] 50
   , Run $ Memory
-    [ "--normal",cl_grey cnf,"--high",cl_red cnf,
-     "-m", "2", "-L", "0", "-H", "90",
-     "-t","<usedratio>%"] 50
+    ["--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "--minwidth", "2",
+     "-m", "2",
+     "-L", "0",
+     "-H", "90",
+     "-t","<usedratio>%"
+    ] 50
   , Run $ Date "%a %b %_d %H:%M" "date" 600
   , Run $ Alsa "default" "Master"
-    [ "--low", cl_aqua cnf, "--normal",cl_grey cnf,"--high",cl_red cnf,
-     "-t", "<volume>%"]
+    ["--low", cl_grey cnf,
+     "--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "-t", "<status> <volume>%",
+     "--minwidth", "2",
+     "--",
+     "--highs", "墳",
+     "--mediums", "奔",
+     "--lows", "奄",
+     "--off", "婢",
+     "--on", "",
+     "--onc", cl_grey cnf,
+     "--offc", cl_red cnf
+    ]
   , Run $ MultiCoreTemp
-    ["--low", cl_aqua cnf, "--normal",cl_grey cnf,"--high",cl_red cnf,
-     "-t", "<avg>°C"] 50
+    ["-L", "25",
+     "-H", "75",
+     "--minwidth", "2",
+     "--low", cl_aqua cnf,
+     "--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "-t", "<avg>°C"
+    ] 50
   , Run $ UnsafeStdinReader
   , Run $ BatteryP ["BAT0"]
     ["-t", "<leftipat>",
      "-L", "10", "-H", "80", "-p", "3",
+     "--minwidth", "3",
      "--",
-     "-O", "\xf58e", "-o", "\xf58b", "-i", "",
-     "--on-icon-pattern", "<acstatus><left>% <timeleft> <watts>",
-     "--off-icon-pattern", "<acstatus><left>% <timeleft> <watts>",
+     "--on-icon-pattern", "\xf58e<left>% <timeleft> <watts>",
+     "--off-icon-pattern", "\xf58b<left>% <timeleft> <watts>",
      "--idle-icon-pattern", "\xf578",
      "-L", "-20", "-H", "-10",
      "-l", cl_grey cnf, "-m", cl_aqua cnf, "-h", cl_red cnf, "-p", cl_green cnf,
      "-a", "notify-send -u critical 'Battery running out!!'",
      "-A", "3"]
-    100
+    50
   ]
+
+tmpl =
+  "%UnsafeStdinReader%}\
+  \{%alsa:default:Master% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
 config :: AConfig -> Config
 config cnf =
@@ -68,8 +103,7 @@ config cnf =
          , commands = cmds cnf
          , sepChar = "%"
          , alignSep = "}{"
-         , template = "%UnsafeStdinReader%}\
-                      \{奔 %alsa:default:Master% | ﯱ %wlp58s0% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+         , template = tmpl
          }
 
 main :: IO ()

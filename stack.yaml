@@ -59,13 +59,14 @@ nix:
   #   - which
 
   packages:
-    # - cairo
-    # - gcc
-    # - gnome2.pango
-    # - gtk2-x11
-    # - libxml2
-    # - pkgconfig
-    # - upower
+    - cairo
+    - gcc
+    - gnome2.pango
+    - gtk2-x11
+    - libxml2
+    - pkgconfig
+    - upower
+    #
     - x11
     - xorg.libX11
     - xorg.libXext

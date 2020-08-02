@@ -224,7 +224,7 @@ myLayout =
 -- 'className' and 'resource' are used below.
 --
 myManageHook :: ManageHook
-myManageHook = composeAll [ className =? "qutebrowser" --> unfloat ]
+myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ]
     where unfloat = ask >>= doF . W.sink
 -- myManageHook = composeAll
     -- [ className =? "MPlayer"        --> doFloat
