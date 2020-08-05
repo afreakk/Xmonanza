@@ -30,7 +30,7 @@ cmds cnf =
      "-H", "90",
      "-t","<usedratio>%"
     ] 50
-  , Run $ Date "%a %b %_d %H:%M" "date" 600
+  , Run $ Date "%a %d %b %H:%M" "date" 600
   , Run $ Alsa "default" "Master"
     ["--low", cl_grey cnf,
      "--normal", cl_grey cnf,
