@@ -51,6 +51,7 @@ executable xmonad-afreak
       BackAndForth
       Calculator
       ExtraKeyCodes
+      LayoutHook
       XmobarUtils
       Paths_xmonanza
   hs-source-dirs:
