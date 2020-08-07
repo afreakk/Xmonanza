@@ -1,5 +1,8 @@
-module AConfig (getConfig, AConfig(..), getHostName) where
+module AConfig (getConfig, AConfig(..), getHostName, ifHnsTop) where
 import Network.HostName
+
+ifHnsTop AConfig{cl_hostName="hanstop"} thn _ = thn
+ifHnsTop _ _ els = els
 
 data AConfig = AConfig
   { cl_black :: String

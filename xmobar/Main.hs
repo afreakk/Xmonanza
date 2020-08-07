@@ -1,5 +1,5 @@
 import Xmobar
-import AConfig (getConfig, AConfig (..))
+import AConfig (ifHnsTop, getConfig, AConfig (..))
 
 -- fcClr :: [Char] -> [Char] -> [Char]
 -- fcClr clr str = "<fc="++clr++">"++str++"</fc>"
@@ -114,10 +114,12 @@ config cnf =
          , iconRoot = ""
          , allDesktops = True
          , overrideRedirect = True
-         , commands = cmds cnf ++ if cl_hostName cnf == "hanstop" then laptopCmds cnf else stationaryCmds cnf
+         , commands = cmds cnf ++ ifHnsTop cnf
+            (laptopCmds cnf)
+            (stationaryCmds cnf)
          , sepChar = "%"
          , alignSep = "}{"
-         , template = if cl_hostName cnf == "hanstop" then laptopTmpl else stationaryTmpl
+         , template = ifHnsTop cnf laptopTmpl stationaryTmpl
          }
 
 main :: IO ()
