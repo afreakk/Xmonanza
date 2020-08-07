@@ -23,13 +23,13 @@ source-repository head
 library
   exposed-modules:
       AConfig
-      XmobarUtils
   other-modules:
       Paths_xmonanza
   hs-source-dirs:
-      src
+      shared
   build-depends:
       base >=4.7 && <5
+    , hostname
   default-language: Haskell2010
 
 executable xmobar-afreak
@@ -48,6 +48,10 @@ executable xmobar-afreak
 executable xmonad-afreak
   main-is: Main.hs
   other-modules:
+      BackAndForth
+      Calculator
+      ExtraKeyCodes
+      XmobarUtils
       Paths_xmonanza
   hs-source-dirs:
       xmonad

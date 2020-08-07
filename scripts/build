@@ -1,15 +1,34 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+set -e
+
+STACK_COMMAND=stack
+ENV_FILE=~/.xmonad/.env
+
+if [ -f $ENV_FILE ]; then
+    source $ENV_FILE
+fi
 # The directory holding your source code and stack.yaml file:
 SRC_DIR=~/coding/Xmonanza/
+
+#check if src has changed`
+sum_file="xmonanza_sum_file"
+sum=$(find $SRC_DIR -type f | xargs -d'\n' -P0 -n1 md5sum | sort -k 2 | md5sum)
+if [ -f "$1" ] && [ -f "$sum_file" ] && [ "${sum}" = "$(cat ${sum_file})" ]; then
+    echo "Skipping xmonanza build as content has not changed"
+    exit
+fi
+echo -n "${sum}" > ${sum_file}
+
 # The name of the executable produced by stack.  This comes from the
 # executable section of your *.cabal or package.yaml file.
 EXE_NAME=xmonad-afreak
+
+# Do the build.
 # Unset STACK_YAML, to ensure that $SRC_DIR/stack.yaml is used.
 unset STACK_YAML
-#
-# Do the build.
 cd $SRC_DIR
-stack build
+$STACK_COMMAND install
 
 # Create a hard link at the requested destination, replacing any existing one.
-ln -f -T $(stack exec -- which $EXE_NAME) $1
+EXE_LOCATION=$($STACK_COMMAND exec -- which $EXE_NAME)
+ln -f -T "$EXE_LOCATION" "$1"

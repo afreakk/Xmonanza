@@ -1,13 +1,101 @@
 import Xmobar
 import AConfig (getConfig, AConfig (..))
 
+-- fcClr :: [Char] -> [Char] -> [Char]
+-- fcClr clr str = "<fc="++clr++">"++str++"</fc>"
+
+cmds :: AConfig -> [Runnable]
+cmds cnf = 
+  [ Run $ DynNetwork
+    ["-L", "0",
+     "-H", "32000",
+     "--normal", cl_grey cnf,
+     "--high",cl_red cnf,
+     "-t", "<rxvbar> <txvbar>"
+    ] 50
+  , Run $ MultiCpu
+    ["-L", "0",
+     "--minwidth", "2",
+     "--low", cl_aqua cnf,
+     "--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "-t", "<total>%"
+    ] 50
+  , Run $ Memory
+    ["--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "--minwidth", "2",
+     "-m", "2",
+     "-L", "0",
+     "-H", "90",
+     "-t","<usedratio>%"
+    ] 50
+  , Run $ Date "%a %d %b %H:%M" "date" 600
+  , Run $ Alsa "default" "Master"
+    ["--low", cl_grey cnf,
+     "--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "-t", "<status> <volume>%",
+     "--minwidth", "2",
+     "--",
+     "--highs", "墳",
+     "--mediums", "奔",
+     "--lows", "奄",
+     "--off", "婢",
+     "--on", "",
+     "--onc", cl_grey cnf,
+     "--offc", cl_red cnf
+    ]
+  , Run $ MultiCoreTemp
+    ["-L", "25",
+     "-H", "75",
+     "--minwidth", "2",
+     "--low", cl_aqua cnf,
+     "--normal", cl_grey cnf,
+     "--high", cl_red cnf,
+     "-t", "<avg>°C"
+    ] 50
+  , Run $ UnsafeStdinReader
+  ]
+
+laptopCmds :: AConfig -> [Runnable]
+laptopCmds cnf = [
+  Run $ BatteryP ["BAT0"]
+    ["-t", "<leftipat>",
+     "-L", "10", "-H", "80", "-p", "3",
+     "--minwidth", "3",
+     "--",
+     "--on-icon-pattern", "\xf58e<left>% <timeleft> <watts>",
+     "--off-icon-pattern", "\xf58b<left>% <timeleft> <watts>",
+     "--idle-icon-pattern", "\xf578",
+     "-L", "-20", "-H", "-10",
+     "-l", cl_grey cnf, "-m", cl_aqua cnf, "-h", cl_red cnf, "-p", cl_green cnf,
+     "-a", "notify-send -u critical 'Battery running out!!'",
+     "-A", "3"]
+    50
+  ]
+
+stationaryCmds cnf = [
+  Run $ Com "nvidia-settings"
+    ["-t","-q","[gpu:0]/GPUCoreTemp" ]
+    "gputemp" 50
+  ]
+
+laptopTmpl =
+  "%UnsafeStdinReader%}\
+  \{%alsa:default:Master% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+
+stationaryTmpl = 
+  "%UnsafeStdinReader%}\
+  \{%alsa:default:Master% | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+
 config :: AConfig -> Config
 config cnf =
   Config { verbose = False
          , wmClass = "xmobar"
          , wmName = "xmobar"
          , border = NoBorder
-         , borderColor = "#BFBFBF"
+         , borderColor = cl_orange cnf
          , borderWidth = 1
          , textOffsets = []
          , font = cl_font cnf
@@ -23,26 +111,17 @@ config cnf =
          , pickBroadest = False
          , persistent = False
          , hideOnStart = False
-         , iconRoot = cl_iconRoot cnf
+         , iconRoot = ""
          , allDesktops = True
          , overrideRedirect = True
-         , commands = [ Run $ Network "enp0s31f6" ["-L","0","-H","32000", "-m", "3", "--normal",cl_aqua cnf,"--high",cl_red cnf, "-t", "<rx>KB|<tx>KB"] 50
-                      , Run $ MultiCpu [ "--low", cl_aqua cnf, "--normal",cl_aqua cnf,"--high",cl_red cnf, "-t", "<total>%"] 50
-                      , Run $ Memory ["-t","<usedratio>%", "-L", "0", "-H", "90", "--normal",cl_aqua cnf,"--high",cl_red cnf, "-m", "2"] 50
-                      , Run $ Date "%a %b %_d %H:%M" "date" 600
-                      , Run $ Alsa "default" "Master" ["-t", "<volume>%",  "--low", cl_aqua cnf, "--normal",cl_aqua cnf,"--high",cl_red cnf]
-                      , Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "gputemp" 50
-                      , Run $ MultiCoreTemp [ "--low", cl_aqua cnf, "--normal",cl_aqua cnf,"--high",cl_red cnf, "-t", "<avg>°C"] 50
-                      , Run $ CatInt 0 "/sys/devices/platform/nct6775.2592/hwmon/hwmon3/fan2_input" [
-                        "-L", "0", "-H", "1082", "--normal",cl_aqua cnf,"--high",cl_red cnf] 50
-                      , Run $ UnsafeStdinReader
-                      ]
+         , commands = cmds cnf ++ if cl_hostName cnf == "hanstop" then laptopCmds cnf else stationaryCmds cnf
          , sepChar = "%"
          , alignSep = "}{"
-         , template = "%UnsafeStdinReader%}\
-                      \{<icon=volume.xpm/> %alsa:default:Master% | %enp0s31f6% | <icon=memory.xpm/> %memory% | <icon=cpu.xpm/> %multicpu% %multicoretemp% %cat0% | <icon=gpu.xpm/> %gputemp%°C | <fc=" ++ cl_lilly cnf ++ ">%date%</fc>"
+         , template = if cl_hostName cnf == "hanstop" then laptopTmpl else stationaryTmpl
          }
 
 main :: IO ()
-main = xmobar $ config getConfig
+main = do
+  cnf <- getConfig
+  xmobar $ config cnf
 

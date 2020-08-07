@@ -47,7 +47,36 @@ flags:
   xmobar:
     with_xft: true
     with_alsa: true
+nix:
+  # enable: true
+  pure: true
+  # packages:
+  #   - haskellPackages.xmonad
+  #   - haskellPackages.xmonad-contrib
+  #   - haskellPackages.xmobar
+  #   - zlib
+  #   # need which for getting the executable for linking to it :)
+  #   - which
 
+  packages:
+    - cairo
+    - gcc
+    - gnome2.pango
+    - gtk2-x11
+    - libxml2
+    - pkgconfig
+    - upower
+    #
+    - x11
+    - xorg.libX11
+    - xorg.libXext
+    - xorg.libXinerama
+    - xorg.libXrandr
+    - xorg.libXrender
+    - xorg.libXScrnSaver
+    - alsaLib
+    - which
+  
 # Override default flag values for local packages and extra-deps
 # flags: {}
 

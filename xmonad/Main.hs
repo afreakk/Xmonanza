@@ -1,6 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
 import XMonad as XM
 import System.Exit
-import XMonad.Actions.CycleWS
 import XMonad.Hooks.DynamicLog
 import XMonad.Util.Run
 import XMonad.Hooks.ManageDocks
@@ -13,11 +13,9 @@ import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
 import XMonad.Layout.WorkspaceDir
 import XMonad.Actions.CopyWindow
-import XMonad.Actions.GridSelect
-import XMonad.Actions.Launcher
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Simplest
-
+import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 import XMonad.Layout.WindowNavigation
 
 import AConfig (getConfig, AConfig (..))
@@ -25,19 +23,21 @@ import XmobarUtils (xmobarShorten)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
-import Data.Char (isLower, isSpace, toLower)
+import Calculator (calculatorPrompt)
+import BackAndForth (backAndForth)
+import ExtraKeyCodes
 
 -- Prompt theme
-myXPConfig :: XPConfig
-myXPConfig = def
-    { font                = cl_font getConfig
-    , bgColor             = cl_black getConfig
-    , fgColor             = cl_grey getConfig
-    , bgHLight            = cl_black getConfig
-    , fgHLight            = cl_lilly getConfig
-    , borderColor         = cl_lilly getConfig
+myXPConfig :: AConfig -> XPConfig
+myXPConfig cfg = def
+    { font                = cl_font cfg
+    , bgColor             = cl_black cfg
+    , fgColor             = cl_grey cfg
+    , bgHLight            = cl_black cfg
+    , fgHLight            = cl_lilly cfg
+    , borderColor         = cl_lilly cfg
     , promptBorderWidth   = 1
-    , height              = fromIntegral $ cl_barHeight getConfig
+    , height              = fromIntegral $ cl_barHeight cfg
     , position            = Bottom
     , historySize         = 100
     , historyFilter       = deleteConsecutive
@@ -45,33 +45,39 @@ myXPConfig = def
     , completionKey       = (0,xK_Tab)
     }
 
-launcherConfig = LauncherConfig { pathToHoogle = "stack hoogle" , browser = "qutebrowser"}
+cmdBrightness arg = "brightnessctl set " ++ arg
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
-myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
+myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
+    , ((0,            xK_XF86AudioRaiseVolume  ), spawn $ cmdSetVolume "+5%")
+    , ((0,            xK_XF86AudioLowerVolume  ), spawn $ cmdSetVolume "-5%")
+    , ((0,            xK_XF86MonBrightnessDown ), spawn $ cmdBrightness "5%-")
+    , ((0,            xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "+5%")
     , ((shiftMask,      xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ((0,              xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
     , ((modm,           xK_Print ), spawn $ cmdMaimSelect "~/img.png")
-      -- XF86AudioRaiseVolume
-    , ((0,            0x1008ff13 ), spawn $ cmdSetVolume "+5%")
-      -- XF86AudioLowerVolume
-    , ((0,            0x1008ff11 ), spawn $ cmdSetVolume "-5%")
-    , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
+
+    , ((modm .|. shiftMask, xK_k ), spawn "dunstctl history-pop")
+    , ((modm              , xK_k ), spawn "dunstctl context")
+    , ((modm              , xK_v ), spawn "dunstctl close")
+    , ((modm .|. shiftMask, xK_v ), spawn "dunstctl close-all")
+    -- , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
     , ((modm,               xK_p ), spawn "clipmenu")
     , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
-    , ((modm,               xK_f ), spawn "~/bin/dwmwindowselector.sh")
+    , ((modm,               xK_f ), spawn "~/bin/windowselector.sh")
     , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
     , ((modm,               xK_w ), spawn "~/bin/runner.sh")
-    , ((modm,               xK_r ), renameWorkspace myXPConfig)
+    , ((modm,               xK_r ), renameWorkspace (myXPConfig cfg))
     , ((modm,               xK_q ), kill1)
     , ((modm,               xK_d ), sendMessage NextLayout)
-    , ((modm,               xK_g ), goToSelected def)
-    , ((modm,               xK_j ), launcherPrompt myXPConfig $ defaultLauncherModes launcherConfig)
+    -- , ((modm,               xK_g ), goToSelected def)
+    , ((modm,               xK_g ), spawn "clipmenu")
+    , ((modm,               xK_a ), calculatorPrompt (myXPConfig cfg) )
     --  Reset the layouts on the current workspace to default
     , ((modm .|. shiftMask, xK_d ), setLayout $ XM.layoutHook conf)
     -- Resize viewed windows to the correct size
@@ -96,12 +102,12 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. controlMask, xK_i), sendMessage $ pullGroup R)
 
     , ((modm .|. controlMask, xK_m), withFocused (sendMessage . MergeAll))
-    , ((modm .|. controlMask, xK_u), withFocused (sendMessage . UnMerge))
+    , ((modm .|. controlMask, xK_x), withFocused (sendMessage . UnMerge))
 
     , ((modm .|. controlMask, xK_period), onGroup W.focusUp')
     , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
     -- Push window back into tiling (from float)
-    , ((modm,               xK_u     ), withFocused $ windows . W.sink)
+    , ((modm,               xK_x     ), withFocused $ windows . W.sink)
     -- Increment the number of windows in the master area
     , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
     -- Deincrement the number of windows in the master area
@@ -116,26 +122,26 @@ myKeys conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- Restart xmonad
     , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
     -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/xmonanza/xmonad/Main.hs | dmenu -l 42"))
-    , ((modm, xK_c     ), changeDir myXPConfig)
-    , ((modm, xK_l), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
+    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    , ((modm, xK_c     ), changeDir (myXPConfig cfg))
+    , ((modm, xK_z), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
     ]
     ++
     [((m .|. modm, k), f i)
       | (i, k) <- zip workspaceNames workspaceKeys
-      , (f, m) <- [ (toggleOrView, 0)
+      , (f, m) <- [ (backAndForth, 0)
                   , (windows . W.shift, shiftMask)
                   , (swapWithCurrent,   controlMask)
                   , (windows . copy,    mod1Mask)
                   ]
     ]
-    -- ++
+    ++
     -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
     --
-    -- [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-    --     | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
-    --     , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
+        | (key, sc) <- zip [xK_l, xK_u] [0..]
+        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 resetWorkspaceNames :: X ()
 resetWorkspaceNames = sequence_ $ map (`setWorkspaceName` "") workspaceNames
@@ -167,17 +173,19 @@ myMouseBindings (XConfig {XM.modMask = modm}) = M.fromList $
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
-myTabConfig = def
-  { activeTextColor = cl_black getConfig 
-  , inactiveTextColor = cl_lilly getConfig 
-  , activeColor = cl_lilly getConfig 
-  , activeBorderColor = cl_lilly getConfig 
-  , inactiveColor = cl_black getConfig 
-  , inactiveBorderColor = cl_lilly getConfig 
-  , urgentColor = cl_aqua getConfig 
-  , urgentBorderColor = cl_lilly getConfig 
-  , fontName = cl_font getConfig
-  , decoHeight = fromIntegral $ cl_barHeight getConfig
+
+myTabConfig :: AConfig -> XMonad.Layout.Tabbed.Theme
+myTabConfig cfg = def
+  { activeTextColor = cl_black cfg 
+  , inactiveTextColor = cl_lilly cfg 
+  , activeColor = cl_lilly cfg 
+  , activeBorderColor = cl_lilly cfg 
+  , inactiveColor = cl_black cfg 
+  , inactiveBorderColor = cl_lilly cfg 
+  , urgentColor = cl_aqua cfg 
+  , urgentBorderColor = cl_lilly cfg 
+  , fontName = cl_font cfg
+  , decoHeight = fromIntegral $ cl_barHeight cfg
   }
 
 ------------------------------------------------------------------------
@@ -190,11 +198,11 @@ myTabConfig = def
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout =
-  windowNavigation (addTabsBottom shrinkText myTabConfig (subLayout [] Simplest tiled))
-  |||(tabbedBottom shrinkText myTabConfig)
-  ||| windowNavigation (addTabsBottom shrinkText myTabConfig (subLayout [] Simplest (Mirror tiled)))
+myLayout tabcfg = tabbed ||| normalTiled ||| bottomTiled
   where
+    tabbed      = tabbedBottom shrinkText tabcfg
+    bottomTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest (Mirror tiled)))
+    normalTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest tiled))
     -- default tiling algorithm partitions the screen into two panes
     tiled   = Tall nmaster delta ratio
     -- The default number of windows in the master pane
@@ -218,7 +226,10 @@ myLayout =
 -- To match on the WM_NAME, you can use 'title' in the same way that
 -- 'className' and 'resource' are used below.
 --
-myManageHook = composeAll []
+myManageHook :: ManageHook
+myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ]
+    where unfloat = ask >>= doF . W.sink
+-- myManageHook = composeAll
     -- [ className =? "MPlayer"        --> doFloat
     -- , className =? "Gimp"           --> doFloat
     -- , resource  =? "desktop_window" --> doIgnore
@@ -237,22 +248,24 @@ myEventHook = ewmhDesktopsEventHook <+> fullscreenEventHook
 clickableWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
   where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
-xmobarTitleAllowedChars = [' '..'z']
+xmobarTitleAllowedChars = [' '..'~']
 ------------------------------------------------------------------------
 -- Status bars and logging
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
-myLogHook xmproc = do
+myLogHook xmproc cfg = do
+  workspaceHistoryHook
   workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten 100
-    , ppCurrent = xmobarColor (cl_lilly getConfig) ""
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten 64
+    , ppCurrent = xmobarColor (cl_lilly cfg) ""
     , ppHidden  = clickableWs
-    , ppTitle   = xmobarColor (cl_lilly getConfig) ""
+    , ppTitle   = xmobarColor (cl_lilly cfg) ""
     , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
-    , ppUrgent  = xmobarColor (cl_aqua  getConfig) "" . clickableWs
+    , ppUrgent  = xmobarColor (cl_aqua  cfg) "" . clickableWs
     , ppOrder   = \(wsNames:layoutName:windowTitle:_) -> [wsNames,windowTitle]
-    , ppSep = " | "
+    , ppSep     = " | "
+    , ppVisible = xmobarColor (cl_green cfg) ""
     } >>= dynamicLogWithPP
 
 ------------------------------------------------------------------------
@@ -266,13 +279,15 @@ myStartupHook = return ()
 
 main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
-  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . docks $ defaults xmobarproc
+  cfg <- getConfig
+  let xx = defaults xmobarproc cfg
+  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . docks $ xx
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
 -- use the defaults defined in xmonad/XMonad/Config.hs
 --
-defaults xmobarproc = def {
+defaults xmobarproc cfg = def {
       -- simple stuff
         terminal           = "alacritty",
         focusFollowsMouse  = False,
@@ -290,16 +305,16 @@ defaults xmobarproc = def {
       --
       -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
         XM.workspaces      = workspaceNames,
-        normalBorderColor  = cl_black getConfig,
-        focusedBorderColor = cl_grey getConfig,
+        normalBorderColor  = cl_black cfg,
+        focusedBorderColor = cl_grey cfg,
       -- key bindings
-        keys               = myKeys,
+        keys               = myKeys cfg,
         mouseBindings      = myMouseBindings,
       -- hooks, layouts
-        layoutHook         = smartBorders.avoidStruts $ workspaceDir "~" $ myLayout,
+        layoutHook         = smartBorders . avoidStruts . ( workspaceDir "/home/afreak/") $ myLayout (myTabConfig cfg),
         manageHook         = myManageHook,
         handleEventHook    = myEventHook,
-        logHook            = myLogHook xmobarproc,
+        logHook            = myLogHook xmobarproc cfg,
         startupHook        = myStartupHook
     }
 
