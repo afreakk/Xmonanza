@@ -1,4 +1,5 @@
-module AConfig (getConfig, AConfig(..)) where
+module AConfig (getConfig, AConfig(..), getHostName) where
+import Network.HostName
 
 data AConfig = AConfig
   { cl_black :: String
@@ -15,22 +16,26 @@ data AConfig = AConfig
   , cl_lilly :: String
   , cl_font :: String
   , cl_barHeight :: Int
+  , cl_hostName :: String
   } deriving (Show)
 
-getConfig :: AConfig
-getConfig = AConfig 
-  { cl_black = "#2D2D2D"
-  , cl_current_line = "#393939"
-  , cl_selection    = "#515151"
-  , cl_comment      = "#999999"
-  , cl_grey  = "#CCCCCC"
-  , cl_red   = "#F2777A"
-  , cl_orange= "#f99157"
-  , cl_yellow= "#ffcc66"
-  , cl_green = "#99cc99"
-  , cl_aqua  = "#66CCCC"
-  , cl_blue  = "#6699cc"
-  , cl_lilly = "#CC99CC"
-  , cl_font  = "xft:Hack Nerd Font:size=13:Regular:antialias=true"
-  , cl_barHeight=45
-  }
+getConfig :: IO AConfig
+getConfig = do
+  hostName <- getHostName
+  return AConfig 
+    { cl_black = "#2D2D2D"
+    , cl_current_line = "#393939"
+    , cl_selection    = "#515151"
+    , cl_comment      = "#999999"
+    , cl_grey  = "#CCCCCC"
+    , cl_red   = "#F2777A"
+    , cl_orange= "#f99157"
+    , cl_yellow= "#ffcc66"
+    , cl_green = "#99cc99"
+    , cl_aqua  = "#66CCCC"
+    , cl_blue  = "#6699cc"
+    , cl_lilly = "#CC99CC"
+    , cl_font  = "xft:Hack Nerd Font:size=13:Regular:antialias=true"
+    , cl_barHeight=if hostName == "hanstop" then 45 else 25
+    , cl_hostName=hostName
+    }

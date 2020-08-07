@@ -56,7 +56,11 @@ cmds cnf =
      "-t", "<avg>°C"
     ] 50
   , Run $ UnsafeStdinReader
-  , Run $ BatteryP ["BAT0"]
+  ]
+
+laptopCmds :: AConfig -> [Runnable]
+laptopCmds cnf = [
+  Run $ BatteryP ["BAT0"]
     ["-t", "<leftipat>",
      "-L", "10", "-H", "80", "-p", "3",
      "--minwidth", "3",
@@ -71,9 +75,19 @@ cmds cnf =
     50
   ]
 
-tmpl =
+stationaryCmds cnf = [
+  Run $ Com "nvidia-settings"
+    ["-t","-q","[gpu:0]/GPUCoreTemp" ]
+    "gputemp" 50
+  ]
+
+laptopTmpl =
   "%UnsafeStdinReader%}\
   \{%alsa:default:Master% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+
+stationaryTmpl = 
+  "%UnsafeStdinReader%}\
+  \{%alsa:default:Master% | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
 config :: AConfig -> Config
 config cnf =
@@ -100,12 +114,14 @@ config cnf =
          , iconRoot = ""
          , allDesktops = True
          , overrideRedirect = True
-         , commands = cmds cnf
+         , commands = cmds cnf ++ if cl_hostName cnf == "hanstop" then laptopCmds cnf else stationaryCmds cnf
          , sepChar = "%"
          , alignSep = "}{"
-         , template = tmpl
+         , template = if cl_hostName cnf == "hanstop" then laptopTmpl else stationaryTmpl
          }
 
 main :: IO ()
-main = xmobar $ config getConfig
+main = do
+  cnf <- getConfig
+  xmobar $ config cnf
 

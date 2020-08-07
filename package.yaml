@@ -21,7 +21,8 @@ dependencies:
 
 library:
   source-dirs: shared
-  # dependencies:
+  dependencies:
+    - hostname
   #   - directory
 
 executables:
