@@ -15,7 +15,7 @@ import XMonad.Actions.CopyWindow
 import XMonad.Layout.SubLayouts
 import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 
-import AConfig (getConfig, AConfig (..))
+import AConfig (getConfig, AConfig (..), ifHnsTop)
 import XmobarUtils (xmobarShorten)
 
 import qualified XMonad.StackSet as W
@@ -231,7 +231,7 @@ xmobarTitleAllowedChars = [' '..'~']
 myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten 64
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 64 100)
     , ppCurrent = xmobarColor (cl_lilly cfg) ""
     , ppHidden  = clickableWs
     , ppTitle   = xmobarColor (cl_lilly cfg) ""
