@@ -62,69 +62,70 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((0,              xK_Print ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
     , ((modm,           xK_Print ), spawn $ cmdMaimSelect "~/img.png")
 
-    , ((modm .|. shiftMask, xK_k ), spawn "dunstctl history-pop")
-    , ((modm              , xK_k ), spawn "dunstctl context")
-    , ((modm              , xK_v ), spawn "dunstctl close")
-    , ((modm .|. shiftMask, xK_v ), spawn "dunstctl close-all")
-    -- , ((modm,               xK_o ), spawn "xmodmap ~/.Xmodmap")
-    , ((modm,               xK_p ), spawn "clipmenu")
-    , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
-    , ((modm,               xK_f ), spawn "~/bin/windowselector.sh")
-    , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
-    , ((modm,               xK_w ), spawn "~/bin/runner.sh")
-    , ((modm,               xK_r ), renameWorkspace (myXPConfig cfg))
     , ((modm,               xK_q ), kill1)
-    , ((modm,               xK_d ), sendMessage NextLayout)
-    -- , ((modm,               xK_g ), goToSelected def)
+    , ((modm,               xK_w ), spawn "~/bin/runner.sh")
+    , ((modm,               xK_f ), spawn "~/bin/windowselector.sh")
+    , ((modm,               xK_p ), spawn "clipmenu")
     , ((modm,               xK_g ), spawn "clipmenu")
+
     , ((modm,               xK_a ), calculatorPrompt (myXPConfig cfg) )
-    --  Reset the layouts on the current workspace to default
-    , ((modm .|. shiftMask, xK_d ), setLayout $ XM.layoutHook conf)
+    , ((modm,               xK_r ), renameWorkspace (myXPConfig cfg))
+    , ((modm .|. shiftMask, xK_r     ), resetWorkspaceNames)
+    , ((modm,               xK_s ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
     -- Resize viewed windows to the correct size
     , ((modm .|. shiftMask, xK_t     ), refresh)
-    , ((modm,               xK_Tab   ), windows W.focusDown)
-    , ((modm,               xK_n     ), windows W.focusDown)
-    , ((modm,               xK_e     ), windows W.focusUp  )
-    -- Move focus to the master window
-    , ((modm,               xK_m     ), windows W.focusMaster  )
     , ((modm,               xK_t     ), promote)
-    -- Swap the focused window with the next window
-    , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
-    -- Swap the focused window with the previous window
-    , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
+    , ((modm,               xK_d ), sendMessage NextLayout)
+    --  Reset the layouts on the current workspace to default
+    , ((modm .|. shiftMask, xK_d ), setLayout $ XM.layoutHook conf)
+
+    , ((modm,                 xK_z), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
+    , ((modm .|. controlMask, xK_x), withFocused (sendMessage . UnMerge))
+    -- Push window back into tiling (from float)
+    , ((modm,                 xK_x     ), withFocused $ windows . W.sink)
+    , ((modm,                 xK_c     ), changeDir (myXPConfig cfg))
+    , ((modm              ,   xK_v ), spawn "dunstctl close")
+    , ((modm .|. shiftMask,   xK_v ), spawn "dunstctl close-all")
+    , ((modm              ,   xK_b     ), sendMessage ToggleStruts)
+
+    , ((modm,               xK_j ), spawn "~/bin/setxkbscript")
+    -- L & U is busy for selecting monitor
+    , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
+
     -- Shrink the master area
     , ((modm,               xK_h     ), sendMessage Shrink)
+    , ((modm .|. controlMask, xK_h), sendMessage $ pullGroup L)
+    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    , ((modm,               xK_n     ), windows W.focusDown)
+    -- Swap the focused window with the next window
+    , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
+    , ((modm .|. controlMask, xK_n), sendMessage $ pullGroup D)
+    , ((modm,               xK_e     ), windows W.focusUp  )
+    -- Swap the focused window with the previous window
+    , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
+    , ((modm .|. controlMask, xK_e), sendMessage $ pullGroup U)
     -- Expand the master area
     , ((modm,               xK_i     ), sendMessage Expand)
-    , ((modm .|. controlMask, xK_h), sendMessage $ pullGroup L)
-    , ((modm .|. controlMask, xK_n), sendMessage $ pullGroup D)
-    , ((modm .|. controlMask, xK_e), sendMessage $ pullGroup U)
     , ((modm .|. controlMask, xK_i), sendMessage $ pullGroup R)
 
+    , ((modm .|. shiftMask, xK_k ), spawn "dunstctl history-pop")
+    , ((modm              , xK_k ), spawn "dunstctl context")
+    -- Move focus to the master window
+    , ((modm,               xK_m     ), windows W.focusMaster  )
     , ((modm .|. controlMask, xK_m), withFocused (sendMessage . MergeAll))
-    , ((modm .|. controlMask, xK_x), withFocused (sendMessage . UnMerge))
-
-    , ((modm .|. controlMask, xK_period), onGroup W.focusUp')
-    , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
-    -- Push window back into tiling (from float)
-    , ((modm,               xK_x     ), withFocused $ windows . W.sink)
     -- Increment the number of windows in the master area
     , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
+    , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
+    , ((modm .|. controlMask, xK_period), onGroup W.focusUp')
     -- Deincrement the number of windows in the master area
     , ((modm              , xK_period), sendMessage (IncMasterN (-1)))
-    -- Toggle the status bar gap
-    -- Use this binding with avoidStruts from Hooks.ManageDocks.
-    -- See also the statusBar function from Hooks.DynamicLog.
-    , ((modm              , xK_b     ), sendMessage ToggleStruts)
-    , ((modm .|. shiftMask, xK_r     ), resetWorkspaceNames)
+
+    -- , ((modm,               xK_g ), goToSelected def)
+    , ((modm,               xK_Tab   ), windows W.focusDown)
     -- Quit xmonad
     , ((modm .|. shiftMask, xK_grave     ), io (exitWith ExitSuccess))
     -- Restart xmonad
     , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
-    -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
-    , ((modm, xK_c     ), changeDir (myXPConfig cfg))
-    , ((modm, xK_z), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
     ]
     ++
     [((m .|. modm, k), f i)
@@ -138,7 +139,6 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     ++
     -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
     -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
-    --
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
         | (key, sc) <- zip [xK_l, xK_u] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
