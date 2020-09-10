@@ -14,6 +14,7 @@ import XMonad.Layout.WorkspaceDir
 import XMonad.Actions.CopyWindow
 import XMonad.Layout.SubLayouts
 import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
+import XMonad.Hooks.FloatNext
 
 import AConfig (getConfig, AConfig (..), ifHnsTop)
 import XmobarUtils (xmobarShorten)
@@ -91,6 +92,7 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_j ), spawn "~/bin/setxkbscript")
     -- L & U is busy for selecting monitor
     , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
+    , ((modm .|. shiftMask, xK_y ), toggleFloatAllNew >> runLogHook)
 
     -- Shrink the master area
     , ((modm,               xK_h     ), sendMessage Shrink)
@@ -203,7 +205,7 @@ myTabConfig cfg = def
 -- 'className' and 'resource' are used below.
 --
 myManageHook :: ManageHook
-myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ]
+myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ] <+> floatNextHook
     where unfloat = ask >>= doF . W.sink
 -- myManageHook = composeAll
     -- [ className =? "MPlayer"        --> doFloat
@@ -234,15 +236,19 @@ myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
     { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 64 100)
-    , ppCurrent = xmobarColor (cl_lilly cfg) ""
+    , ppCurrent = xmobarColor (cl_lilly cfg) "" .clickableWs
     , ppHidden  = clickableWs
     , ppTitle   = xmobarColor (cl_lilly cfg) ""
     , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
     , ppUrgent  = xmobarColor (cl_aqua  cfg) "" . clickableWs
-    , ppOrder   = \(wsNames:layoutName:windowTitle:_) -> [wsNames,windowTitle]
+    , ppOrder   = toOrdr
     , ppSep     = " | "
     , ppVisible = xmobarColor (cl_green cfg) ""
+    , ppExtras = [willFloatAllNewPP id]
     } >>= dynamicLogWithPP
+  where
+    toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [wsNames,xtras,windowTitle]
+    toOrdr (wsNames:layoutName:windowTitle:_) = [wsNames,windowTitle]
 
 ------------------------------------------------------------------------
 -- Startup hook
