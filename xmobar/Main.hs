@@ -55,6 +55,19 @@ cmds cnf =
      "--high", cl_red cnf,
      "-t", "<avg>°C"
     ] 50
+  , Run $ WeatherX "ENZV"
+    [ ("clear", "望")
+    , ("sunny", "\xe30d")
+    , ("mostly clear", "\xe37b")
+    , ("mostly sunny", "\xe30c")
+    , ("partly sunny", "\xe302")
+    , ("fair", "\xe302")
+    , ("cloudy","\xe33d")
+    , ("overcast","\xe33d")
+    , ("partly cloudy", "\xe379")
+    , ("mostly cloudy", "\xe37e")
+    , ("considerable cloudiness", "\xfa8f")]
+  ["-t", "<skyConditionS>  <weather> <tempC>° <windKmh>km/h"] 600
   , Run $ UnsafeStdinReader
   ]
 
@@ -87,7 +100,7 @@ laptopTmpl =
 
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
-  \{%alsa:default:Master% | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+  \{ %ENZV% | %alsa:default:Master% | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
 config :: AConfig -> Config
 config cnf =
