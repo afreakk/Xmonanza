@@ -97,7 +97,7 @@ stationaryCmds cnf = [
 
 laptopTmpl =
   "%UnsafeStdinReader%}\
-  \{%alsa:default:Master% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+  \{ %ENZV% | %alsa:default:Master% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
