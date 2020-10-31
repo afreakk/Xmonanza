@@ -46,7 +46,7 @@ myXPConfig cfg = def
 
 cmdBrightness arg = "brightnessctl set " ++ arg
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
-cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
+cmdMaimSelect out = "maim --select --hidecursor --format png --quality 3 " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
@@ -128,6 +128,8 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_grave     ), io (exitWith ExitSuccess))
     -- Restart xmonad
     , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
+    , ((modm .|. controlMask, xK_l), spawn "~/bin/monitorselect.sh HDMI-0 DP-2")
+    , ((modm .|. controlMask, xK_u), spawn "~/bin/monitorselect.sh DP-2 HDMI-0")
     ]
     ++
     [((m .|. modm, k), f i)
