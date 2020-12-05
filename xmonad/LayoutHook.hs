@@ -4,6 +4,7 @@ import XMonad.Layout.Tabbed
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Simplest
 import XMonad as XM
+import XMonad.Layout.Reflect
 ------------------------------------------------------------------------
 -- Layouts:
 -- You can specify and transform your layouts by modifying these values.
@@ -14,17 +15,17 @@ import XMonad as XM
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout tabcfg = tabbed ||| normalTiled ||| bottomTiled
+myLayout tabcfg = bigScreenBottomTiled ||| tabbed
   where
+    bigScreenBottomTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest (reflectHoriz (reflectVert (Mirror tiled)))))
     tabbed      = tabbedBottom shrinkText tabcfg
-    bottomTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest (Mirror tiled)))
-    normalTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest tiled))
+    -- normalTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest tiled))
     -- default tiling algorithm partitions the screen into two panes
     tiled   = Tall nmaster delta ratio
     -- The default number of windows in the master pane
     nmaster = 1
     -- Default proportion of screen occupied by master pane
-    ratio   = 1/2
+    ratio   = 4/7
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
 
