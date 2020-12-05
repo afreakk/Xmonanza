@@ -15,7 +15,7 @@ import XMonad.Actions.CopyWindow
 import XMonad.Layout.SubLayouts
 import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 import XMonad.Hooks.FloatNext
-
+import XMonad.Actions.CycleWS
 import AConfig (getConfig, AConfig (..), ifHnsTop)
 import XmobarUtils (xmobarShorten)
 
@@ -113,17 +113,18 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_k ), spawn "dunstctl history-pop")
     , ((modm              , xK_k ), spawn "dunstctl context")
     -- Move focus to the master window
-    , ((modm,               xK_m     ), windows W.focusMaster  )
-    , ((modm .|. controlMask, xK_m), withFocused (sendMessage . MergeAll))
+    , ((modm,               xK_period     ), windows W.focusMaster  )
+    , ((modm .|. controlMask, xK_period), withFocused (sendMessage . MergeAll))
     -- Increment the number of windows in the master area
-    , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
-    , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
-    , ((modm .|. controlMask, xK_period), onGroup W.focusUp')
+    , ((modm              , xK_m ), sendMessage (IncMasterN 1))
+    , ((modm .|. controlMask, xK_m), onGroup W.focusDown')
+    , ((modm .|. controlMask, xK_comma), onGroup W.focusUp')
     -- Deincrement the number of windows in the master area
-    , ((modm              , xK_period), sendMessage (IncMasterN (-1)))
+    , ((modm              , xK_comma), sendMessage (IncMasterN (-1)))
 
     -- , ((modm,               xK_g ), goToSelected def)
-    , ((modm,               xK_Tab   ), windows W.focusDown)
+    , ((modm,               xK_Tab   ), nextWS)
+    , ((modm .|. shiftMask, xK_Tab   ), prevWS)
     -- Quit xmonad
     , ((modm .|. shiftMask, xK_grave     ), io (exitWith ExitSuccess))
     -- Restart xmonad
@@ -249,8 +250,10 @@ myLogHook xmproc cfg = do
     , ppExtras = [willFloatAllNewPP id]
     } >>= dynamicLogWithPP
   where
-    toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [wsNames,xtras,windowTitle]
-    toOrdr (wsNames:layoutName:windowTitle:_) = [wsNames,windowTitle]
+    toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
+    toOrdr (wsNames:layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
+
+scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
 ------------------------------------------------------------------------
 -- Startup hook
