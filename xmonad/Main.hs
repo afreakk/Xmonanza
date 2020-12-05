@@ -115,12 +115,11 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     -- Move focus to the master window
     , ((modm,               xK_period     ), windows W.focusMaster  )
     , ((modm .|. controlMask, xK_period), withFocused (sendMessage . MergeAll))
-    -- Increment the number of windows in the master area
-    , ((modm              , xK_m ), sendMessage (IncMasterN 1))
-    , ((modm .|. controlMask, xK_m), onGroup W.focusDown')
-    , ((modm .|. controlMask, xK_comma), onGroup W.focusUp')
-    -- Deincrement the number of windows in the master area
-    , ((modm              , xK_comma), sendMessage (IncMasterN (-1)))
+
+    , ((modm .|. controlMask, xK_m), onGroup W.focusUp')
+    , ((modm              , xK_m), sendMessage (IncMasterN (-1)))
+    , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
+    , ((modm .|. controlMask, xK_comma), onGroup W.focusDown')
 
     -- , ((modm,               xK_g ), goToSelected def)
     , ((modm,               xK_Tab   ), nextWS)
