@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    hackage: xmobar-0.35.1@sha256:855c2f477aa9d32b34b3bfa5873e6076d4f337af7dd74bcdc162693bfd062cb2,11921
+    hackage: xmobar-0.37@sha256:42cfb68788901364a1b4ddfdc213106e18851dda2575420e532ee31c4cce4e51,12020
     pantry-tree:
-      size: 6404
-      sha256: 56e8da6537457b828c1eed0ef3e0fdbc6824aa962946d7b70f3c0a7959c25225
+      size: 6479
+      sha256: b110f67f00fdb59cd2a1988937eda1934889c3ba71d03823011df48791175ee5
   original:
-    hackage: xmobar-0.35.1
+    hackage: xmobar-0.37
 snapshots:
 - completed:
-    size: 531696
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/3.yaml
-    sha256: 65e3a94c65ad07fa1913649e3f1e36c4af51bf528a5d9fd217bdc1b46d0477cc
-  original: lts-16.3
+    size: 533252
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/25.yaml
+    sha256: 147598b98bdd95ec0409bac125a4f1bff3cd4f8d73334d283d098f66a4bcc053
+  original: lts-16.25
