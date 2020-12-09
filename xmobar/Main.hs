@@ -101,7 +101,7 @@ laptopTmpl =
 
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
-  \{ %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+  \{ %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
 
 config :: AConfig -> Config
 config cnf =
