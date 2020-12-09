@@ -49,6 +49,7 @@ executable xmonad-afreak
   main-is: Main.hs
   other-modules:
       BackAndForth
+      BooleanLayout
       Calculator
       ExtraKeyCodes
       LayoutHook

@@ -1,11 +1,30 @@
 {-# LANGUAGE FlexibleContexts #-}
 module LayoutHook (myLayout) where
+import XMonad.Layout.NoBorders (smartBorders)
 import XMonad.Layout.Tabbed
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Simplest
-import XMonad as XM
 import XMonad.Layout.Reflect
 import XMonad.Layout.WindowNavigation
+import XMonad.Hooks.ManageDocks as MD
+import XMonad.Layout
+import AConfig (AConfig (..))
+import BooleanLayout
+
+myTabConfig :: AConfig -> XMonad.Layout.Tabbed.Theme
+myTabConfig cfg = def
+  { activeTextColor = cl_black cfg 
+  , inactiveTextColor = cl_lilly cfg 
+  , activeColor = cl_lilly cfg 
+  , activeBorderColor = cl_lilly cfg 
+  , inactiveColor = cl_black cfg 
+  , inactiveBorderColor = cl_lilly cfg 
+  , urgentColor = cl_aqua cfg 
+  , urgentBorderColor = cl_lilly cfg 
+  , fontName = cl_font cfg
+  , decoHeight = fromIntegral $ cl_barHeight cfg
+  }
+
 ------------------------------------------------------------------------
 -- Layouts:
 -- You can specify and transform your layouts by modifying these values.
@@ -16,14 +35,16 @@ import XMonad.Layout.WindowNavigation
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout tabcfg = bigScreenTiledSubTabbed ||| tabbed
+myLayout cfg = smartBorders . MD.avoidStruts $ dynamicTiledSubTabbed ||| tabbed
   where
-    bigScreenTiledSubTabbed = windowNavigation $ subTabbedBottom tabcfg bigScreenTiled
-    tabbed                  = tabbedBottom shrinkText tabcfg
-    bigScreenTiled          = reflectHoriz (reflectVert (Mirror tiled))
-    -- normalTiled = (addTabsBottom shrinkText tabcfg (subLayout [] Simplest tiled))
-    -- default tiling algorithm partitions the screen into two panes
-    tiled   = Tall nmaster delta ratio
+    tabcfg                = myTabConfig cfg
+    tabbed                = tabbedBottom shrinkText tabcfg
+
+    dynamicTiledSubTabbed = configurableNavigation noNavigateBorders $ subTabbedBottom tabcfg dynamicTiled
+    dynamicTiled          = BooleanLayout isHogwarts hogwartsTiled tiled
+    hogwartsTiled         = reflectHoriz $ reflectVert $ Mirror tiled
+    tiled                 = Tall nmaster delta ratio
+
     -- The default number of windows in the master pane
     nmaster = 1
     -- Default proportion of screen occupied by master pane
@@ -31,4 +52,4 @@ myLayout tabcfg = bigScreenTiledSubTabbed ||| tabbed
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
     subTabbedBottom tabcfg parentLayout = addTabsBottom shrinkText tabcfg $ subLayout [] Simplest parentLayout
-
+    isHogwarts = cl_hostName cfg == "hogwarts"

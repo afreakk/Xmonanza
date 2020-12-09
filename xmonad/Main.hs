@@ -2,15 +2,13 @@ import XMonad as XM
 import System.Exit
 import XMonad.Hooks.DynamicLog
 import XMonad.Util.Run
-import XMonad.Hooks.ManageDocks
 import XMonad.Layout.Tabbed
-import XMonad.Layout.NoBorders
 import XMonad.Hooks.EwmhDesktops
 import XMonad.StackSet as SS
 import XMonad.Hooks.UrgencyHook
 import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
-import XMonad.Layout.WorkspaceDir
+import XMonad.Prompt.XMonad
 import XMonad.Actions.CopyWindow
 import XMonad.Layout.SubLayouts
 import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
@@ -18,6 +16,7 @@ import XMonad.Hooks.FloatNext
 import XMonad.Actions.CycleWS
 import AConfig (getConfig, AConfig (..), ifHnsTop)
 import XmobarUtils (xmobarShorten)
+import XMonad.Hooks.ManageDocks as MD
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -45,6 +44,25 @@ myXPConfig cfg = def
     , completionKey       = (0,xK_Tab)
     }
 
+myCmds cfg conf =
+    [ ("default-layout", setLayout $ XM.layoutHook conf         )
+    , ("recompile"     , spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
+    , ("kill"          , kill                                             )
+    , ("refresh"       , refresh                                          )
+    , ("quit-wm"       , io $ exitWith ExitSuccess                        )
+    , ("hotkeys"       , spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    , ("dunstctl-history-pop", spawn "dunstctl history-pop")
+    , ("dunstctl-context", spawn "dunstctl context")
+    , ("dunstctl-close", spawn "dunstctl close")
+    , ("dunstctl-close-all", spawn "dunstctl close-all")
+    , ("clip-to~/img.png", spawn $ cmdMaimSelect "~/img.png")
+    , ("clip-to-feh", spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
+    , ("setactivesink", spawn "~/bin/setActiveSink")
+    ]
+
+myXmPrompt cfg conf = 
+    xmonadPromptC (myCmds cfg conf) (myXPConfig cfg)
+
 cmdBrightness arg = "brightnessctl set " ++ arg
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect out = "maim --select --hidecursor --format png --quality 3 " ++ out
@@ -60,9 +78,7 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,         xK_XF86MonBrightnessDown ), spawn $ cmdBrightness "1")
     , ((0,            xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "+5%")
     , ((modm,         xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "100%")
-    , ((shiftMask,      xK_Print   ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ((0,              xK_Print   ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
-    , ((modm,           xK_Print   ), spawn $ cmdMaimSelect "~/img.png")
 
     , ((modm,               xK_q   ), kill1)
     , ((modm,               xK_w   ), spawn "~/bin/runner.sh")
@@ -74,20 +90,12 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_r   ), renameWorkspace (myXPConfig cfg))
     , ((modm .|. shiftMask, xK_r   ), resetWorkspaceNames)
     , ((modm,               xK_s   ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
-    -- Resize viewed windows to the correct size
-    , ((modm .|. shiftMask, xK_t   ), refresh)
     , ((modm,               xK_t   ), promote)
     , ((modm,               xK_d   ), sendMessage NextLayout)
-    --  Reset the layouts on the current workspace to default
-    , ((modm .|. shiftMask, xK_d   ), setLayout $ XM.layoutHook conf)
-
     , ((modm,                 xK_z ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
-    -- Push window back into tiling (from float)
     , ((modm,                 xK_x ), withFocused $ windows . W.sink)
-    , ((modm,                 xK_c ), changeDir (myXPConfig cfg))
-    , ((modm              ,   xK_v ), spawn "dunstctl close")
-    , ((modm .|. shiftMask,   xK_v ), spawn "dunstctl close-all")
-    , ((modm              ,   xK_b ), sendMessage ToggleStruts)
+    , ((modm,                 xK_c ), myXmPrompt cfg conf)
+    , ((modm              ,   xK_b ), sendMessage MD.ToggleStruts)
     , ((modm, xK_semicolon), submap . M.fromList $
         [ ((modm , xK_h), sendMessage $ pullGroup L)
         , ((modm , xK_n), sendMessage $ pullGroup U)
@@ -99,39 +107,19 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
         , ((0,    xK_e), onGroup W.focusUp')
         ])
     , ((modm,               xK_j ), spawn "~/bin/setxkbscript")
-    -- L & U is busy for selecting monitor
     , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
     , ((modm .|. shiftMask, xK_y ), toggleFloatAllNew >> runLogHook)
-
-    -- Shrink the master area
     , ((modm,               xK_h     ), sendMessage Shrink)
-    , ((modm .|. shiftMask, xK_h ), spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
     , ((modm,               xK_n     ), windows W.focusDown)
-    -- Swap the focused window with the next window
     , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
     , ((modm,               xK_e     ), windows W.focusUp  )
-    -- Swap the focused window with the previous window
     , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
-    -- Expand the master area
     , ((modm,               xK_i     ), sendMessage Expand)
-
-    , ((modm .|. shiftMask, xK_k ), spawn "dunstctl history-pop")
-    , ((modm              , xK_k ), spawn "dunstctl context")
-    -- Move focus to the master window
     , ((modm,               xK_period     ), windows W.focusMaster  )
-
     , ((modm              , xK_m), sendMessage (IncMasterN (-1)))
     , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
-
-    -- , ((modm,               xK_g ), goToSelected def)
     , ((modm,               xK_Tab   ), nextWS)
     , ((modm .|. shiftMask, xK_Tab   ), prevWS)
-    -- Quit xmonad
-    , ((modm .|. shiftMask, xK_grave     ), io (exitWith ExitSuccess))
-    -- Restart xmonad
-    , ((modm              , xK_grave     ), spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
-    -- , ((modm .|. controlMask, xK_l), spawn "~/bin/monitorselect.sh HDMI-0 DP-2")
-    -- , ((modm .|. controlMask, xK_u), spawn "~/bin/monitorselect.sh DP-2 HDMI-0")
     ]
     ++
     [((m .|. modm, k), f i)
@@ -179,20 +167,6 @@ myMouseBindings (XConfig {XM.modMask = modm}) = M.fromList $
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
-
-myTabConfig :: AConfig -> XMonad.Layout.Tabbed.Theme
-myTabConfig cfg = def
-  { activeTextColor = cl_black cfg 
-  , inactiveTextColor = cl_lilly cfg 
-  , activeColor = cl_lilly cfg 
-  , activeBorderColor = cl_lilly cfg 
-  , inactiveColor = cl_black cfg 
-  , inactiveBorderColor = cl_lilly cfg 
-  , urgentColor = cl_aqua cfg 
-  , urgentBorderColor = cl_lilly cfg 
-  , fontName = cl_font cfg
-  , decoHeight = fromIntegral $ cl_barHeight cfg
-  }
 
 ------------------------------------------------------------------------
 -- Window rules:
@@ -269,7 +243,7 @@ main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
   let xx = defaults xmobarproc cfg
-  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . docks $ xx
+  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . MD.docks $ xx
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
@@ -282,7 +256,7 @@ defaults xmobarproc cfg = def {
       -- Whether clicking on a window to focus also passes the click to the window
         clickJustFocuses   = False,
       -- Width of the window border in pixels.
-        borderWidth        = 5,
+        borderWidth        = 6,
         modMask            = mod4Mask,
       -- The default number of workspaces (virtual screens) and their names.
       -- By default we use numeric strings, but any string may be used as a
@@ -294,12 +268,12 @@ defaults xmobarproc cfg = def {
       -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
         XM.workspaces      = workspaceNames,
         normalBorderColor  = cl_black cfg,
-        focusedBorderColor = cl_grey cfg,
+        focusedBorderColor = cl_lilly cfg,
       -- key bindings
         keys               = myKeys cfg,
         mouseBindings      = myMouseBindings,
       -- hooks, layouts
-        layoutHook         = smartBorders . avoidStruts . ( workspaceDir "/home/afreak/") $ myLayout (myTabConfig cfg),
+        layoutHook         = myLayout cfg,
         manageHook         = myManageHook,
         handleEventHook    = myEventHook,
         logHook            = myLogHook xmobarproc cfg,
