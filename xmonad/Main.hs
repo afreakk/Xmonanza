@@ -17,6 +17,7 @@ import XMonad.Actions.CycleWS
 import AConfig (getConfig, AConfig (..), ifHnsTop)
 import XmobarUtils (xmobarShorten)
 import XMonad.Hooks.ManageDocks as MD
+import XMonad.Layout.BoringWindows as BRNG
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -46,7 +47,7 @@ myXPConfig cfg = def
 
 myCmds cfg conf =
     [ ("default-layout", setLayout $ XM.layoutHook conf         )
-    , ("recompile"     , spawn "xmonad-afreak --recompile; xmonad-afreak --restart")
+    , ("recompile"     , spawn "xmonad-afreak --recompile; xmonad-afreak --restart;")
     , ("kill"          , kill                                             )
     , ("refresh"       , refresh                                          )
     , ("quit-wm"       , io $ exitWith ExitSuccess                        )
@@ -105,14 +106,15 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
         , ((modm, xK_m), withFocused (sendMessage . UnMerge))
         , ((0,    xK_n), onGroup W.focusDown')
         , ((0,    xK_e), onGroup W.focusUp')
+        , ((modm, xK_t), onGroup swapMasterOnStack)
         ])
     , ((modm,               xK_j ), spawn "~/bin/setxkbscript")
     , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
     , ((modm .|. shiftMask, xK_y ), toggleFloatAllNew >> runLogHook)
     , ((modm,               xK_h     ), sendMessage Shrink)
-    , ((modm,               xK_n     ), windows W.focusDown)
+    , ((modm,               xK_n     ), BRNG.focusDown)
     , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
-    , ((modm,               xK_e     ), windows W.focusUp  )
+    , ((modm,               xK_e     ), BRNG.focusUp  )
     , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
     , ((modm,               xK_i     ), sendMessage Expand)
     , ((modm,               xK_period     ), windows W.focusMaster  )
@@ -136,6 +138,8 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
         | (key, sc) <- zip [xK_l, xK_u] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
+
+swapMasterOnStack (W.Stack f u d) = W.Stack f [] $ reverse u ++ d
 
 resetWorkspaceNames :: X ()
 resetWorkspaceNames = sequence_ $ map (`setWorkspaceName` "") workspaceNames
