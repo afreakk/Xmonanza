@@ -18,6 +18,7 @@ data AConfig = AConfig
   , cl_blue  :: String
   , cl_lilly :: String
   , cl_font :: String
+  , cl_font_big :: String
   , cl_barHeight :: Int
   , cl_hostName :: String
   } deriving (Show)
@@ -38,7 +39,8 @@ getConfig = do
     , cl_aqua  = "#66CCCC"
     , cl_blue  = "#6699cc"
     , cl_lilly = "#CC99CC"
-    , cl_font  = "xft:Hack Nerd Font:size=14:Regular:antialias=true"
+    , cl_font  = "xft:Hack Nerd Font:size=15:Regular:antialias=true"
+    , cl_font_big  = "xft:Hack Nerd Font:size=18:Regular:antialias=true"
     , cl_barHeight=if hostName == "hanstop" then 45 else 25
     , cl_hostName=hostName
     }
