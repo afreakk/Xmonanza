@@ -49,7 +49,7 @@ myLayout cfg = smartBorders $ MD.avoidStruts $ BRNG.boringWindows $ dynamicTiled
     -- The default number of windows in the master pane
     nmaster = 1
     -- Default proportion of screen occupied by master pane
-    ratio   = toRational (2/(1 + sqrt 5 :: Double))
+    ratio   = toRational ((2/(1 + sqrt 5 :: Double)) + (fromIntegral (cl_barHeight cfg)) / 2160)
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
     subTabbedBottom tabcfg parentLayout = addTabsBottom shrinkText tabcfg $ subLayout [] Simplest parentLayout
