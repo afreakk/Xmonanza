@@ -52,6 +52,7 @@ executable xmonad-afreak
       BooleanLayout
       Calculator
       ExtraKeyCodes
+      GridSelects
       LayoutHook
       XmobarUtils
       Paths_xmonanza

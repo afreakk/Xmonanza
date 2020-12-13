@@ -19,6 +19,7 @@ import XmobarUtils (xmobarShorten)
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Layout.BoringWindows as BRNG
 
+import XMonad.Hooks.ScreenCorners
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 import Calculator (calculatorPrompt)
@@ -26,6 +27,7 @@ import BackAndForth (backAndForth)
 import ExtraKeyCodes
 import LayoutHook (myLayout)
 import XMonad.Actions.Submap
+import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
 
 -- Prompt theme
 myXPConfig :: AConfig -> XPConfig
@@ -46,28 +48,28 @@ myXPConfig cfg = def
     }
 
 myCmds cfg conf =
-    [ ("default-layout", setLayout $ XM.layoutHook conf         )
-    , ("recompile"     , spawn "xmonad-afreak --recompile; xmonad-afreak --restart;")
-    , ("kill"          , kill                                             )
-    , ("refresh"       , refresh                                          )
-    , ("quit-wm"       , io $ exitWith ExitSuccess                        )
-    , ("hotkeys"       , spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    [ ("default-layout"      , setLayout $ XM.layoutHook conf)
+    , ("recompile"           , spawn "xmonad-afreak --recompile; xmonad-afreak --restart;")
+    , ("kill"                , kill1)
+    , ("refresh"             , refresh)
+    , ("quit-wm"             , io $ exitWith ExitSuccess)
+    , ("hotkeys"             , spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
     , ("dunstctl-history-pop", spawn "dunstctl history-pop")
-    , ("dunstctl-context", spawn "dunstctl context")
-    , ("dunstctl-close", spawn "dunstctl close")
-    , ("dunstctl-close-all", spawn "dunstctl close-all")
-    , ("clip-to~/img.png", spawn $ cmdMaimSelect "~/img.png")
-    , ("clip-to-feh", spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
-    , ("setactivesink", spawn "~/bin/setActiveSink")
+    , ("dunstctl-context"    , spawn "dunstctl context")
+    , ("dunstctl-close"      , spawn "dunstctl close")
+    , ("dunstctl-close-all"  , spawn "dunstctl close-all")
+    , ("dunstctl-action"     , spawn "dunstctl action")
+    , ("clip-to~/img.png"    , spawn $ cmdMaimSelect "~/img.png")
+    , ("clip-to-feh"         , spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
+    , ("setactivesink"       , spawn "~/bin/setActiveSink")
     ]
-
-myXmPrompt cfg conf = 
-    xmonadPromptC (myCmds cfg conf) (myXPConfig cfg)
 
 cmdBrightness arg = "brightnessctl set " ++ arg
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect out = "maim --select --hidecursor --format png --quality 3 " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
+
+
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
@@ -79,13 +81,26 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,         xK_XF86MonBrightnessDown ), spawn $ cmdBrightness "1")
     , ((0,            xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "+5%")
     , ((modm,         xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "100%")
-    , ((0,              xK_Print   ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
+    , ((0,            xK_Print                 ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
 
     , ((modm,               xK_q   ), kill1)
     , ((modm,               xK_w   ), spawn "~/bin/runner.sh")
-    , ((modm,               xK_f   ), spawn "~/bin/windowselector.sh")
+    , ((modm,               xK_f   ), spawn "notify-send --urgency=low 'sublayout submap'" >>
+        (submap . M.fromList $
+            [ ((modm, xK_h), sendMessage $ pullGroup L)
+            , ((modm, xK_n), sendMessage $ pullGroup U)
+            , ((modm, xK_e), sendMessage $ pullGroup D)
+            , ((modm, xK_i), sendMessage $ pullGroup R)
+            , ((0,    xK_m), withFocused (sendMessage . MergeAll))
+            , ((0,    xK_u), withFocused (sendMessage . UnMerge))
+            , ((0,    xK_n), onGroup W.focusDown')
+            , ((0,    xK_e), onGroup W.focusUp')
+            , ((0,    xK_t), onGroup swapMasterOnStack)
+            ]
+        )
+      )
     , ((modm,               xK_p   ), spawn "clipmenu")
-    , ((modm,               xK_g   ), spawn "clipmenu")
+    , ((modm,               xK_g   ), gsWindowGoto cfg)
 
     , ((modm,               xK_a   ), calculatorPrompt (myXPConfig cfg) )
     , ((modm,               xK_r   ), renameWorkspace (myXPConfig cfg))
@@ -95,30 +110,23 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_d   ), sendMessage NextLayout)
     , ((modm,                 xK_z ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
     , ((modm,                 xK_x ), withFocused $ windows . W.sink)
-    , ((modm,                 xK_c ), myXmPrompt cfg conf)
+    , ((modm,                 xK_c ), gsActionRunner (myCmds cfg conf) cfg)
     , ((modm              ,   xK_b ), sendMessage MD.ToggleStruts)
-    , ((modm, xK_semicolon), submap . M.fromList $
-        [ ((modm , xK_h), sendMessage $ pullGroup L)
-        , ((modm , xK_n), sendMessage $ pullGroup U)
-        , ((modm , xK_e), sendMessage $ pullGroup D)
-        , ((modm , xK_i), sendMessage $ pullGroup R)
-        , ((0,    xK_m), withFocused (sendMessage . MergeAll))
-        , ((modm, xK_m), withFocused (sendMessage . UnMerge))
-        , ((0,    xK_n), onGroup W.focusDown')
-        , ((0,    xK_e), onGroup W.focusUp')
-        , ((modm, xK_t), onGroup swapMasterOnStack)
-        ])
-    , ((modm,               xK_j ), spawn "~/bin/setxkbscript")
-    , ((modm,               xK_y ), spawn "~/bin/terminal.sh")
-    , ((modm .|. shiftMask, xK_y ), toggleFloatAllNew >> runLogHook)
+
+    , ((modm,               xK_j     ), spawn "~/bin/setxkbscript")
+    , ((modm,               xK_y     ), spawn "~/bin/terminal.sh")
+    , ((modm .|. shiftMask, xK_y     ), toggleFloatAllNew >> runLogHook)
+
     , ((modm,               xK_h     ), sendMessage Shrink)
     , ((modm,               xK_n     ), BRNG.focusDown)
     , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
     , ((modm,               xK_e     ), BRNG.focusUp  )
     , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
     , ((modm,               xK_i     ), sendMessage Expand)
-    , ((modm,               xK_period     ), windows W.focusMaster  )
-    , ((modm              , xK_m), sendMessage (IncMasterN (-1)))
+    -- , ((modm,               xK_o     ), gsWindowGoto cfg )
+
+    , ((modm,               xK_period), windows W.focusMaster  )
+    , ((modm              , xK_m     ), sendMessage (IncMasterN (-1)))
     , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
     , ((modm,               xK_Tab   ), nextWS)
     , ((modm .|. shiftMask, xK_Tab   ), prevWS)
@@ -203,7 +211,8 @@ myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =
 -- return (All True) if the default handler is to be run afterwards. To
 -- combine event hooks use mappend or mconcat from Data.Monoid.
 --
-myEventHook = ewmhDesktopsEventHook <+> fullscreenEventHook
+myEventHook =
+    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook
 
 clickableWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
   where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
@@ -241,7 +250,18 @@ scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xm
 -- per-workspace layout choices.
 --
 -- By default, do nothing.
-myStartupHook = return ()
+mouseHelpActions = [
+    ("Cancel menu", return ())
+  , ("Close"      , kill1)
+  , ("Promote"    , promote)
+  , ("Next layout", sendMessage NextLayout)
+  , ("Inc Master", sendMessage $ IncMasterN (-1))
+  , ("Dec Master", sendMessage $ IncMasterN 1)
+  , ("Expand", sendMessage Expand)
+  , ("Shrink", sendMessage Shrink)
+  ]
+myStartupHook cfg = do
+    addScreenCorner SCUpperRight $ gsWithWindows mouseHelpActions cfg
 
 main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
@@ -281,6 +301,6 @@ defaults xmobarproc cfg = def {
         manageHook         = myManageHook,
         handleEventHook    = myEventHook,
         logHook            = myLogHook xmobarproc cfg,
-        startupHook        = myStartupHook
+        startupHook        = myStartupHook cfg
     }
 
