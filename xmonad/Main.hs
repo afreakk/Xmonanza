@@ -66,7 +66,7 @@ myCmds cfg conf =
 
 cmdBrightness arg = "brightnessctl set " ++ arg
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
-cmdMaimSelect out = "maim --select --hidecursor --format png --quality 3 " ++ out
+cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 
 
