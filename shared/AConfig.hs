@@ -21,6 +21,8 @@ data AConfig = AConfig
   , cl_font_big :: String
   , cl_barHeight :: Int
   , cl_hostName :: String
+  , cl_gsCellWidth :: Integer
+  , cl_gsCellWidthBig :: Integer
   } deriving (Show)
 
 getConfig :: IO AConfig
@@ -43,4 +45,6 @@ getConfig = do
     , cl_font_big  = "xft:Hack Nerd Font:size=18:Regular:antialias=true"
     , cl_barHeight=if hostName == "hanstop" then 50 else 25
     , cl_hostName=hostName
+    , cl_gsCellWidth = if hostName == "hanstop" then 360 else 180
+    , cl_gsCellWidthBig = if hostName == "hanstop" then 480 else 240
     }

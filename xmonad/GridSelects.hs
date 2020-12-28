@@ -15,23 +15,23 @@ gsWithWindows extraActions cfg = withFocused $ \w -> do
             ++ [ ("Move to " ++ tag, windows $ W.shift tag)
             | tag <- tags ] )
 
-gsWindowGoto cfg = goToSelected $ (myGsConfigWithDefaultColorizer cfg) {gs_cellwidth = 240}
+gsWindowGoto cfg = goToSelected $ (myGsConfigWithDefaultColorizer cfg) {gs_cellwidth = cl_gsCellWidthBig cfg}
 
 gsActionRunner actions cfg = do
-    runSelectedAction ((myGsConfig cfg) {gs_cellwidth = 220}) actions
+    runSelectedAction ((myGsConfig cfg) {gs_cellwidth = cl_gsCellWidthBig cfg}) actions
 
 
 -- configs
 
 myGsConfigWithDefaultColorizer cfg = def
             { gs_font = cl_font cfg
-            , gs_cellwidth = 180
+            , gs_cellwidth = cl_gsCellWidth cfg
             , gs_navigate = navNSearch
             }
 
 myGsConfig cfg = (buildDefaultGSConfig colorizer)
             { gs_font = cl_font cfg
-            , gs_cellwidth = 180
+            , gs_cellwidth = cl_gsCellWidth cfg
             , gs_navigate = navNSearch
             }
 
