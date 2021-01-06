@@ -12,6 +12,7 @@ import AConfig (AConfig (..))
 import BooleanLayout
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Hooks.ScreenCorners
+import XMonad.Layout.ResizableTile
 
 myTabConfig :: AConfig -> XMonad.Layout.Tabbed.Theme
 myTabConfig cfg = def
@@ -45,7 +46,7 @@ myLayout cfg = screenCornerLayoutHook $ smartBorders $ MD.avoidStruts $ BRNG.bor
     dynamicTiledSubTabbed = configurableNavigation noNavigateBorders $ subTabbedBottom tabcfg dynamicTiled
     dynamicTiled          = BooleanLayout isHogwarts hogwartsTiled tiled
     hogwartsTiled         = reflectHoriz $ reflectVert $ Mirror tiled
-    tiled                 = Tall nmaster delta ratio
+    tiled                 = ResizableTall nmaster delta ratio []
 
     -- The default number of windows in the master pane
     nmaster = 1

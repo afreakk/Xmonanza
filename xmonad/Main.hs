@@ -18,6 +18,7 @@ import AConfig (getConfig, AConfig (..), ifHnsTop)
 import XmobarUtils (xmobarShorten)
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Layout.BoringWindows as BRNG
+import XMonad.Layout.ResizableTile
 
 import XMonad.Hooks.ScreenCorners
 import qualified XMonad.StackSet as W
@@ -118,11 +119,13 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_y     ), toggleFloatAllNew >> runLogHook)
 
     , ((modm,               xK_h     ), sendMessage Shrink)
+    , ((modm .|. shiftMask, xK_h), sendMessage MirrorShrink)
     , ((modm,               xK_n     ), BRNG.focusDown)
     , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
     , ((modm,               xK_e     ), BRNG.focusUp  )
     , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
     , ((modm,               xK_i     ), sendMessage Expand)
+    , ((modm .|. shiftMask, xK_i     ), sendMessage MirrorExpand)
     -- , ((modm,               xK_o     ), gsWindowGoto cfg )
 
     , ((modm,               xK_period), windows W.focusMaster  )
