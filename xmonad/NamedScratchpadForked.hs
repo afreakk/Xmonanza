@@ -146,12 +146,9 @@ someNamedScratchpadAction f confs n
                          if null (filter ((== scratchpadWorkspaceTag) . W.tag) (W.workspaces s))
                              then addHiddenWorkspace scratchpadWorkspaceTag
                              else return ()
-                         -- creation of refocus function needs to be before shiftWin etc
-                         refocus <- refocusWhen (return True) (W.currentTag s)
-                         -- so order here is important
-                         f (windows . W.shiftWin scratchpadWorkspaceTag) filterAll
-                         -- and this needs to be at the end, modify current window list with the function created before shiftWin
-                         windows refocus
+                         -- creation of refocusLast function needs to be before shiftWin, so it gets proper 'last focused win' before it shifts focus again
+                         refocusLast <- refocusWhen (return True) (W.currentTag s)
+                         f (\scratchPadWindow -> windows (refocusLast . (W.shiftWin scratchpadWorkspaceTag scratchPadWindow ))) filterAll
     | otherwise = return ()
 
 -- tag of the scratchpad workspace
