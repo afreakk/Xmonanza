@@ -232,7 +232,7 @@ myManageHook = composeAll
 -- combine event hooks use mappend or mconcat from Data.Monoid.
 --
 myEventHook =
-    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook -- <+> floatSpotify
+    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook
 
 -- hide NSP ws
 -- other ws make clickable with xdotool
