@@ -1,5 +1,5 @@
 {-# LANGUAGE PatternGuards #-}
--- forked to include toggleFocus soo it keeps focus when hiding scratchpad
+-- forked to include refocusWhen so it focuses last focused window when scratchpad gets hidden
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Util.NamedScratchpad
@@ -141,12 +141,17 @@ someNamedScratchpadAction f confs n
                        [] -> do
                          case filterAll of
                            [] -> runApplication conf
-                           _  -> f (windows . W.shiftWin (W.currentTag s)) filterAll >> toggleFocus
+                           _  -> f (windows . W.shiftWin (W.currentTag s)) filterAll
                        _ -> do
                          if null (filter ((== scratchpadWorkspaceTag) . W.tag) (W.workspaces s))
                              then addHiddenWorkspace scratchpadWorkspaceTag
                              else return ()
-                         f (windows . W.shiftWin scratchpadWorkspaceTag) filterAll >> toggleFocus
+                         -- creation of refocus function needs to be before shiftWin etc
+                         refocus <- refocusWhen (return True) (W.currentTag s)
+                         -- so order here is important
+                         f (windows . W.shiftWin scratchpadWorkspaceTag) filterAll
+                         -- and this needs to be at the end, modify current window list with the function created before shiftWin
+                         windows refocus
     | otherwise = return ()
 
 -- tag of the scratchpad workspace
