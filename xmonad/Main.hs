@@ -20,8 +20,8 @@ import XmobarUtils (xmobarShorten)
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Layout.ResizableTile
-import XMonad.Util.NamedScratchpad
 import XMonad.Hooks.DynamicProperty
+import XMonad.Hooks.RefocusLast
 
 import XMonad.Hooks.ScreenCorners
 import qualified XMonad.StackSet as W
@@ -32,6 +32,7 @@ import ExtraKeyCodes
 import LayoutHook (myLayout)
 import XMonad.Actions.Submap
 import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
+import NamedScratchpadForked
 
 scratchpads =
     [ NS "spotify" "spotify" (className =? "Spotify") defaultFloating
@@ -208,8 +209,15 @@ myMouseBindings (XConfig {XM.modMask = modm}) = M.fromList $
 -- 'className' and 'resource' are used below.
 --
 myManageHook :: ManageHook
-myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ] <+> floatNextHook <+> (namedScratchpadManageHook scratchpads)
-    where unfloat = ask >>= doF . W.sink
+myManageHook = composeAll
+    [ className =? "qutebrowser" --> unfloat
+    , className =? "TeamViewer"  --> unfloat
+    -- , className =? "Spotify"     --> doFloat
+    -- , title     =? "todo"        --> doFloat
+    ]
+    <+> floatNextHook
+    <+> (namedScratchpadManageHook scratchpads)
+        where unfloat = ask >>= doF . W.sink
 -- myManageHook = composeAll
     -- [ className =? "MPlayer"        --> doFloat
     -- , className =? "Gimp"           --> doFloat
@@ -320,10 +328,10 @@ defaults xmobarproc cfg = def {
         keys               = myKeys cfg,
         mouseBindings      = myMouseBindings,
       -- hooks, layouts
-        layoutHook         = myLayout cfg,
+        layoutHook         = refocusLastLayoutHook $ myLayout cfg,
         manageHook         = myManageHook,
-        handleEventHook    = myEventHook,
-        logHook            = myLogHook xmobarproc cfg,
+        handleEventHook    = myEventHook <+> (refocusLastWhen isFloat),
+        logHook            = (myLogHook xmobarproc cfg), -- <+> refocusLastLogHook,
         startupHook        = myStartupHook cfg
     }
 
