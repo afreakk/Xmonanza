@@ -20,7 +20,6 @@ import XmobarUtils (xmobarShorten)
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Layout.ResizableTile
-import XMonad.Hooks.DynamicProperty
 import XMonad.Hooks.RefocusLast
 
 import XMonad.Hooks.ScreenCorners
@@ -35,7 +34,7 @@ import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
 import NamedScratchpadForked
 
 scratchpads =
-    [ NS "spotify" "spotify" (className =? "Spotify") defaultFloating
+    [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
     , NS "todo" "namedVim.sh todo ~/Dropbox/todo/todo.txt" (wmName =? "todo") (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
     ] where wmName = stringProperty "WM_NAME"
 
@@ -233,11 +232,7 @@ myManageHook = composeAll
 -- combine event hooks use mappend or mconcat from Data.Monoid.
 --
 myEventHook =
-    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook <+> floatSpotify
-
--- hack from https://www.reddit.com/r/xmonad/comments/ay7824/floating_spotify_in_a_namedscratchpad/
-floatSpotify = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
-    where floating  = customFloating $ W.RationalRect 0.5 0.01 0.5 0.98
+    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook -- <+> floatSpotify
 
 -- hide NSP ws
 -- other ws make clickable with xdotool
@@ -297,8 +292,7 @@ myStartupHook cfg = do
 main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
-  let xx = defaults xmobarproc cfg
-  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . MD.docks $ xx
+  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . MD.docks $ defaults xmobarproc cfg
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
