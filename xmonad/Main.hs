@@ -9,6 +9,7 @@ import XMonad.Hooks.UrgencyHook
 import XMonad.Actions.WorkspaceNames
 import XMonad.Prompt
 import XMonad.Prompt.XMonad
+import XMonad.Prompt.Man
 import XMonad.Actions.CopyWindow
 import XMonad.Layout.SubLayouts
 import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
@@ -19,6 +20,8 @@ import XmobarUtils (xmobarShorten)
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Layout.ResizableTile
+import XMonad.Util.NamedScratchpad
+import XMonad.Hooks.DynamicProperty
 
 import XMonad.Hooks.ScreenCorners
 import qualified XMonad.StackSet as W
@@ -29,6 +32,11 @@ import ExtraKeyCodes
 import LayoutHook (myLayout)
 import XMonad.Actions.Submap
 import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
+
+scratchpads =
+    [ NS "spotify" "spotify" (className =? "Spotify") defaultFloating
+    , NS "todo" "namedVim.sh todo ~/Dropbox/todo/todo.txt" (wmName =? "todo") (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
+    ] where wmName = stringProperty "WM_NAME"
 
 -- Prompt theme
 myXPConfig :: AConfig -> XPConfig
@@ -63,6 +71,7 @@ myCmds cfg conf =
     , ("clip-to~/img.png"    , spawn $ cmdMaimSelect "~/img.png")
     , ("clip-to-feh"         , spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ("setactivesink"       , spawn "~/bin/setActiveSink")
+    , ("manPrompt"           , manPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg
@@ -126,7 +135,8 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
     , ((modm,               xK_i     ), sendMessage Expand)
     , ((modm .|. shiftMask, xK_i     ), sendMessage MirrorExpand)
-    -- , ((modm,               xK_o     ), gsWindowGoto cfg )
+    , ((modm,               xK_o     ), namedScratchpadAction scratchpads "todo")
+    , ((modm,               xK_semicolon), namedScratchpadAction scratchpads "spotify")
 
     , ((modm,               xK_period), windows W.focusMaster  )
     , ((modm              , xK_m     ), sendMessage (IncMasterN (-1)))
@@ -198,7 +208,7 @@ myMouseBindings (XConfig {XM.modMask = modm}) = M.fromList $
 -- 'className' and 'resource' are used below.
 --
 myManageHook :: ManageHook
-myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ] <+> floatNextHook
+myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =? "TeamViewer" --> unfloat ] <+> floatNextHook <+> (namedScratchpadManageHook scratchpads)
     where unfloat = ask >>= doF . W.sink
 -- myManageHook = composeAll
     -- [ className =? "MPlayer"        --> doFloat
@@ -215,9 +225,16 @@ myManageHook = composeAll [ className =? "qutebrowser" --> unfloat , className =
 -- combine event hooks use mappend or mconcat from Data.Monoid.
 --
 myEventHook =
-    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook
+    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook <+> floatSpotify
 
-clickableWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
+-- hack from https://www.reddit.com/r/xmonad/comments/ay7824/floating_spotify_in_a_namedscratchpad/
+floatSpotify = dynamicPropertyChange "WM_NAME" (title =? "Spotify" --> floating)
+    where floating  = customFloating $ W.RationalRect 0.5 0.01 0.5 0.98
+
+-- hide NSP ws
+-- other ws make clickable with xdotool
+formatWs "NSP"  = ""
+formatWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
   where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
 xmobarTitleAllowedChars = [' '..'~']
@@ -230,11 +247,11 @@ myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
     { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 64 100)
-    , ppCurrent = xmobarColor (cl_lilly cfg) "" .clickableWs
-    , ppHidden  = clickableWs
+    , ppCurrent = xmobarColor (cl_lilly cfg) "" .formatWs
+    , ppHidden  = formatWs
     , ppTitle   = xmobarColor (cl_lilly cfg) ""
     , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
-    , ppUrgent  = xmobarColor (cl_aqua  cfg) "" . clickableWs
+    , ppUrgent  = xmobarColor (cl_aqua  cfg) "" . formatWs
     , ppOrder   = toOrdr
     , ppSep     = " | "
     , ppVisible = xmobarColor (cl_green cfg) ""
@@ -255,13 +272,16 @@ scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xm
 -- By default, do nothing.
 mouseHelpActions = [
     ("Cancel menu", return ())
-  , ("Close"      , kill1)
+  , ("Kill"      , kill1)
   , ("Promote"    , promote)
   , ("Next layout", sendMessage NextLayout)
   , ("Inc Master", sendMessage $ IncMasterN (-1))
   , ("Dec Master", sendMessage $ IncMasterN 1)
   , ("Expand", sendMessage Expand)
   , ("Shrink", sendMessage Shrink)
+  , ("magnify", (floatNext True) >> spawn "magnify")
+  , ("copyToAll", windows copyToAll)
+  , ("killAllOtherCopies", killAllOtherCopies)
   ]
 myStartupHook cfg = do
     addScreenCorner SCUpperRight $ gsWithWindows mouseHelpActions cfg

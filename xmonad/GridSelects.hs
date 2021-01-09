@@ -10,7 +10,7 @@ import AConfig (AConfig (..))
 gsWithWindows extraActions cfg = withFocused $ \w -> do
     tags <- asks (workspaces . config)
     runSelectedAction
-        ( myGsConfig cfg )
+        ( myGsConfigBigFonts cfg )
         ( extraActions
             ++ [ ("Move to " ++ tag, windows $ W.shift tag)
             | tag <- tags ] )
@@ -18,7 +18,7 @@ gsWithWindows extraActions cfg = withFocused $ \w -> do
 gsWindowGoto cfg = goToSelected $ (myGsConfigWithDefaultColorizer cfg) {gs_cellwidth = cl_gsCellWidthBig cfg}
 
 gsActionRunner actions cfg = do
-    runSelectedAction ((myGsConfig cfg) {gs_cellwidth = cl_gsCellWidthBig cfg}) actions
+    runSelectedAction (myGsConfig cfg) actions
 
 
 -- configs
@@ -36,7 +36,9 @@ myGsConfig cfg = (buildDefaultGSConfig colorizer)
             }
 
 myGsConfigBigFonts cfg = (myGsConfig cfg)
-            { gs_font = cl_font_big cfg }
+            { gs_font = cl_font_big cfg
+            , gs_cellwidth = cl_gsCellWidthBig cfg
+            }
 
 colorizer :: a -> Bool -> X (String, String)
 colorizer _ isFg = do

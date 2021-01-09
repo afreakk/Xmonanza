@@ -89,10 +89,12 @@ laptopCmds cnf = [
     50
   ]
 
-stationaryCmds cnf = [
-  Run $ Com "nvidia-settings"
-    ["-t","-q","[gpu:0]/GPUCoreTemp" ]
-    "gputemp" 50
+cryptoPrice pair = "curl 'https://api.coinbase.com/v2/prices/"++pair++"/spot?currency=USD' -s | jq '.data.amount' -r"
+
+stationaryCmds cnf = 
+  [ Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "gputemp" 50
+  , Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
+  , Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
   ]
 
 laptopTmpl =
@@ -101,7 +103,7 @@ laptopTmpl =
 
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
-  \{ %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
+  \{ETH %ethprice% | BTC %btcprice% | %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
 
 config :: AConfig -> Config
 config cnf =
