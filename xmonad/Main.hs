@@ -31,11 +31,12 @@ import ExtraKeyCodes
 import LayoutHook (myLayout)
 import XMonad.Actions.Submap
 import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
-import NamedScratchpadForked
+import NamedScratchpadRefocusLast
 
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
     , NS "todo" "namedVim.sh todo ~/Dropbox/todo/todo.txt" (wmName =? "todo") (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
+    , NS "kmag" "kmag" (className =? "kmag") (customFloating $ W.RationalRect 0.05 0.9 0.9 0.1)
     ] where wmName = stringProperty "WM_NAME"
 
 -- Prompt theme
@@ -282,7 +283,7 @@ mouseHelpActions = [
   , ("Dec Master", sendMessage $ IncMasterN 1)
   , ("Expand", sendMessage Expand)
   , ("Shrink", sendMessage Shrink)
-  , ("magnify", (floatNext True) >> spawn "magnify")
+  , ("magnify", namedScratchpadAction scratchpads "kmag")
   , ("copyToAll", windows copyToAll)
   , ("killAllOtherCopies", killAllOtherCopies)
   ]

@@ -9,13 +9,13 @@ import XMonad.StackSet
 --  attatched to ur loghook
 
 backAndForth :: WorkspaceId -> X ()
-backAndForth toWS = do
-    cur <- gets (currentTag . windowset)
-    if toWS == cur
-       then WH.workspaceHistory >>= showPreviousWindow
-        else windows (greedyView toWS)
+backAndForth toWS = gets (currentTag . windowset) >>= go
+    where
+        go cur
+          | toWS == cur = WH.workspaceHistory >>= showSndWindowInList
+          | otherwise   = windows (greedyView toWS)
 
-showPreviousWindow :: [WorkspaceId] -> X ()
-showPreviousWindow (_:znd:_) = windows (greedyView znd)
-showPreviousWindow _         = return ()
+showSndWindowInList :: [WorkspaceId] -> X ()
+showSndWindowInList (_:znd:_) = windows (greedyView znd)
+showSndWindowInList _         = return ()
 

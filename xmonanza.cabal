@@ -54,7 +54,7 @@ executable xmonad-afreak
       ExtraKeyCodes
       GridSelects
       LayoutHook
-      NamedScratchpadForked
+      NamedScratchpadRefocusLast
       XmobarUtils
       Paths_xmonanza
   hs-source-dirs:

@@ -1,5 +1,5 @@
 {-# LANGUAGE PatternGuards #-}
--- forked to include refocusWhen so it focuses last focused window when scratchpad gets hidden
+-- forked NamedScratchpad include refocusWhen so it focuses last focused window when scratchpad gets hidden
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Util.NamedScratchpad
@@ -14,7 +14,7 @@
 --
 -----------------------------------------------------------------------------
 
-module NamedScratchpadForked (
+module NamedScratchpadRefocusLast (
   -- * Usage
   -- $usage
   NamedScratchpad(..),
