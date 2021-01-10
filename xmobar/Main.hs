@@ -91,10 +91,12 @@ laptopCmds cnf = [
 
 cryptoPrice pair = "curl 'https://api.coinbase.com/v2/prices/"++pair++"/spot?currency=USD' -s | jq '.data.amount' -r"
 
+hddTmp =" <free>/<size> <usedbar> |"
 stationaryCmds cnf = 
   [ Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "gputemp" 50
   , Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
   , Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
+  , Run $ DiskU [("/", hddTmp), ("sdb1", hddTmp), ("nvme0n1p2", hddTmp)] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
   ]
 
 laptopTmpl =
@@ -103,7 +105,7 @@ laptopTmpl =
 
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
-  \{ETH %ethprice% | BTC %btcprice% | %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
+  \{%disku% ETH %ethprice% | BTC %btcprice% | %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
 
 config :: AConfig -> Config
 config cnf =

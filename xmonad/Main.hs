@@ -21,6 +21,7 @@ import XMonad.Hooks.ManageDocks as MD
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Layout.ResizableTile
 import XMonad.Hooks.RefocusLast
+import XMonad.Hooks.ManageHelpers
 
 import XMonad.Hooks.ScreenCorners
 import qualified XMonad.StackSet as W
@@ -37,6 +38,7 @@ scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
     , NS "todo" "namedVim.sh todo ~/Dropbox/todo/todo.txt" (wmName =? "todo") (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
     , NS "kmag" "kmag" (className =? "kmag") (customFloating $ W.RationalRect 0.05 0.9 0.9 0.1)
+    , NS "mpv" "mpv" (className =? "mpv") (customFloating $ W.RationalRect 0.25 0.01 0.5 0.4)
     ] where wmName = stringProperty "WM_NAME"
 
 -- Prompt theme
@@ -119,10 +121,10 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_s   ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
     , ((modm,               xK_t   ), promote)
     , ((modm,               xK_d   ), sendMessage NextLayout)
-    , ((modm,                 xK_z ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
-    , ((modm,                 xK_x ), withFocused $ windows . W.sink)
-    , ((modm,                 xK_c ), gsActionRunner (myCmds cfg conf) cfg)
-    , ((modm              ,   xK_b ), sendMessage MD.ToggleStruts)
+    , ((modm,               xK_z ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
+    , ((modm,               xK_x ), withFocused $ windows . W.sink)
+    , ((modm,               xK_c ), gsActionRunner (myCmds cfg conf) cfg)
+    , ((modm,               xK_b ), sendMessage MD.ToggleStruts)
 
     , ((modm,               xK_j     ), spawn "~/bin/setxkbscript")
     , ((modm,               xK_y     ), spawn "~/bin/terminal.sh")
@@ -140,8 +142,9 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_semicolon), namedScratchpadAction scratchpads "spotify")
 
     , ((modm,               xK_period), windows W.focusMaster  )
-    , ((modm              , xK_m     ), sendMessage (IncMasterN (-1)))
-    , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
+    , ((modm,               xK_m     ), sendMessage (IncMasterN (-1)))
+    , ((modm,               xK_comma ), sendMessage (IncMasterN 1))
+    , ((modm,               xK_slash), namedScratchpadAction scratchpads "mpv")
     , ((modm,               xK_Tab   ), nextWS)
     , ((modm .|. shiftMask, xK_Tab   ), prevWS)
     ]
@@ -212,6 +215,7 @@ myManageHook :: ManageHook
 myManageHook = composeAll
     [ className =? "qutebrowser" --> unfloat
     , className =? "TeamViewer"  --> unfloat
+    , className =? "mpv"         --> (doRectFloat $ W.RationalRect 0.25 0.01 0.5 0.4)
     -- , className =? "Spotify"     --> doFloat
     -- , title     =? "todo"        --> doFloat
     ]
