@@ -140,6 +140,7 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_i     ), sendMessage MirrorExpand)
     , ((modm,               xK_o     ), namedScratchpadAction scratchpads "todo")
     , ((modm,               xK_semicolon), namedScratchpadAction scratchpads "spotify")
+    , ((modm,               xK_oslash), namedScratchpadAction scratchpads "spotify")
 
     , ((modm,               xK_period), windows W.focusMaster  )
     , ((modm,               xK_m     ), sendMessage (IncMasterN (-1)))
