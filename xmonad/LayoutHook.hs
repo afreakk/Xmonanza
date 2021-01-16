@@ -11,7 +11,6 @@ import XMonad.Layout
 import AConfig (AConfig (..))
 import BooleanLayout
 import XMonad.Layout.BoringWindows as BRNG
-import XMonad.Hooks.ScreenCorners
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Spacing
 
@@ -39,7 +38,7 @@ myTabConfig cfg = def
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout cfg = gaps $ screenCornerLayoutHook $ smartBorders $ MD.avoidStruts $ BRNG.boringWindows $ dynamicTiledSubTabbed ||| tabbed
+myLayout cfg = gaps $ smartBorders $ MD.avoidStruts $ BRNG.boringWindows $ dynamicTiledSubTabbed ||| tabbed
   where
     gaps                  = spacingRaw False (Border 0 0 0 0) False (Border 10 0 5 5) True 
     tabcfg                = myTabConfig cfg

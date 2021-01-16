@@ -210,8 +210,6 @@ myManageHook = composeAll
     [ className =? "qutebrowser" --> unfloat
     , className =? "TeamViewer"  --> unfloat
     , className =? "mpv"         --> (doRectFloat $ W.RationalRect 0.25 0.01 0.5 0.4)
-    -- , className =? "Spotify"     --> doFloat
-    -- , title     =? "todo"        --> doFloat
     ]
     <+> floatNextHook
     <+> (namedScratchpadManageHook scratchpads)
@@ -273,6 +271,7 @@ myStartupHook cfg = gsWithWindows mouseHelpActions cfg
 
 screenCornerStuff c = c { handleEventHook = handleEventHook c <+> screenCornerEventHook
                         , startupHook     = addScreenCorner SCUpperRight $ startupHook c
+                        , layoutHook      = screenCornerLayoutHook $ layoutHook c
                         }
 
 ewmhAndFullScreen c = ewmh $ c { handleEventHook = handleEventHook c <+> fullscreenEventHook }
