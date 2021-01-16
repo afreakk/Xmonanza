@@ -1,38 +1,38 @@
-import XMonad as XM
-import System.Exit
-import XMonad.Hooks.DynamicLog
-import XMonad.Util.Run
-import XMonad.Layout.Tabbed
-import XMonad.Hooks.EwmhDesktops
-import XMonad.StackSet as SS
-import XMonad.Hooks.UrgencyHook
-import XMonad.Actions.WorkspaceNames
-import XMonad.Prompt
-import XMonad.Prompt.XMonad
-import XMonad.Prompt.Man
-import XMonad.Actions.CopyWindow
-import XMonad.Layout.SubLayouts
-import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
-import XMonad.Hooks.FloatNext
-import XMonad.Actions.CycleWS
 import AConfig (getConfig, AConfig (..), ifHnsTop)
-import XmobarUtils (xmobarShorten)
+import System.Exit
+import XMonad as XM
+import XMonad.Actions.CopyWindow
+import XMonad.Actions.CycleWS
+import XMonad.Actions.Promote
+import XMonad.Actions.WorkspaceNames
+import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.FloatNext
 import XMonad.Hooks.ManageDocks as MD
+import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.RefocusLast
+import XMonad.Hooks.ScreenCorners
+import XMonad.Hooks.UrgencyHook
+import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Layout.ResizableTile
-import XMonad.Hooks.RefocusLast
-import XMonad.Hooks.ManageHelpers
-
-import XMonad.Hooks.ScreenCorners
+import XMonad.Layout.SubLayouts
+import XMonad.Layout.Tabbed
+import XMonad.Prompt
+import XMonad.Prompt.Man
+import XMonad.Prompt.XMonad
+import XMonad.Util.Run
+import XmobarUtils (xmobarShorten)
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
-import Calculator (calculatorPrompt)
+
 import BackAndForth (backAndForth)
+import Calculator (calculatorPrompt)
+import EwmhDesktopsPromote
 import ExtraKeyCodes
-import LayoutHook (myLayout)
-import XMonad.Actions.Submap
 import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
+import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
+import XMonad.Actions.Submap
 
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
@@ -176,13 +176,6 @@ workspaceNames = map show $ [1..9 :: Int] ++ [0]
 workspaceKeys :: [KeySym]
 workspaceKeys = [xK_1..xK_9] ++ [xK_0]
 
-promote :: X ()
-promote = windows $ SS.modify' $
-             \c -> case c of
-                   SS.Stack _ [] []     -> c
-                   SS.Stack t [] (x:rs) -> SS.Stack x [] (t:rs)
-                   SS.Stack t ls rs     -> SS.Stack t [] (reverse ls ++ rs)
-
 ------------------------------------------------------------------------
 -- Mouse bindings: default actions bound to mouse events
 myMouseBindings (XConfig {XM.modMask = modm}) = M.fromList $
@@ -223,22 +216,6 @@ myManageHook = composeAll
     <+> floatNextHook
     <+> (namedScratchpadManageHook scratchpads)
         where unfloat = ask >>= doF . W.sink
--- myManageHook = composeAll
-    -- [ className =? "MPlayer"        --> doFloat
-    -- , className =? "Gimp"           --> doFloat
-    -- , resource  =? "desktop_window" --> doIgnore
-    -- , resource  =? "kdesktop"       --> doIgnore ]
-
-------------------------------------------------------------------------
--- Event handling
--- * EwmhDesktops users should change this to ewmhDesktopsEventHook
---
--- Defines a custom handler function for X Events. The function should
--- return (All True) if the default handler is to be run afterwards. To
--- combine event hooks use mappend or mconcat from Data.Monoid.
---
-myEventHook =
-    screenCornerEventHook <+> ewmhDesktopsEventHook <+> fullscreenEventHook
 
 -- hide NSP ws
 -- other ws make clickable with xdotool
@@ -292,46 +269,43 @@ mouseHelpActions = [
   , ("copyToAll", windows copyToAll)
   , ("killAllOtherCopies", killAllOtherCopies)
   ]
-myStartupHook cfg = do
-    addScreenCorner SCUpperRight $ gsWithWindows mouseHelpActions cfg
+myStartupHook cfg = gsWithWindows mouseHelpActions cfg
+
+screenCornerStuff c = c { handleEventHook = handleEventHook c <+> screenCornerEventHook
+                        , startupHook     = addScreenCorner SCUpperRight $ startupHook c
+                        }
+
+ewmhAndFullScreen c = ewmh $ c { handleEventHook = handleEventHook c <+> fullscreenEventHook }
 
 main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
-  xmonad . ewmh . ( withUrgencyHook NoUrgencyHook ) . MD.docks $ defaults xmobarproc cfg
+  xmonad . ewmhAndFullScreen . applyRefocusLastHooks . ( withUrgencyHook NoUrgencyHook ) . MD.docks . screenCornerStuff $ defaults xmobarproc cfg
+
+applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> (refocusLastWhen isFloat)
+                            , layoutHook      = refocusLastLayoutHook $ layoutHook c
+                            --, logHook         = logHook c <+> refocusLastLogHook
+                            }
 
 -- A structure containing your configuration settings, overriding
 -- fields in the default config. Any you don't override, will
 -- use the defaults defined in xmonad/XMonad/Config.hs
 --
 defaults xmobarproc cfg = def {
-      -- simple stuff
         terminal           = "alacritty",
         focusFollowsMouse  = False,
-      -- Whether clicking on a window to focus also passes the click to the window
         clickJustFocuses   = False,
-      -- Width of the window border in pixels.
-        borderWidth        = 6,
+        borderWidth        = 5,
         modMask            = mod4Mask,
-      -- The default number of workspaces (virtual screens) and their names.
-      -- By default we use numeric strings, but any string may be used as a
-      -- workspace name. The number of workspaces is determined by the length
-      -- of this list.
-      --
-      -- A tagging example:
-      --
-      -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
         XM.workspaces      = workspaceNames,
         normalBorderColor  = cl_black cfg,
         focusedBorderColor = cl_lilly cfg,
-      -- key bindings
         keys               = myKeys cfg,
         mouseBindings      = myMouseBindings,
-      -- hooks, layouts
-        layoutHook         = refocusLastLayoutHook $ myLayout cfg,
+        layoutHook         = myLayout cfg,
         manageHook         = myManageHook,
-        handleEventHook    = myEventHook <+> (refocusLastWhen isFloat),
-        logHook            = (myLogHook xmobarproc cfg), -- <+> refocusLastLogHook,
+        -- handleEventHook    = myEventHook,
+        logHook            = (myLogHook xmobarproc cfg),
         startupHook        = myStartupHook cfg
     }
 

@@ -51,6 +51,7 @@ executable xmonad-afreak
       BackAndForth
       BooleanLayout
       Calculator
+      EwmhDesktopsPromote
       ExtraKeyCodes
       GridSelects
       LayoutHook
@@ -64,6 +65,7 @@ executable xmonad-afreak
       X11
     , base >=4.7 && <5
     , containers
+    , utf8-string
     , xmonad
     , xmonad-contrib
     , xmonanza

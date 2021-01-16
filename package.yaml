@@ -42,6 +42,7 @@ executables:
     - X11
     - xmonad
     - xmonad-contrib
+    - utf8-string
   xmobar-afreak:
     main:                Main.hs
     source-dirs:         xmobar
