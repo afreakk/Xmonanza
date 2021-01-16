@@ -4,6 +4,7 @@ import XMonad as XM
 import XMonad.Actions.CopyWindow
 import XMonad.Actions.CycleWS
 import XMonad.Actions.Promote
+import XMonad.Actions.Submap
 import XMonad.Actions.WorkspaceNames
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.FloatNext
@@ -32,14 +33,15 @@ import ExtraKeyCodes
 import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
 import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
-import XMonad.Actions.Submap
 
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
-    , NS "todo" "namedVim.sh todo ~/Dropbox/todo/todo.txt" (wmName =? "todo") (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
-    , NS "kmag" "kmag" (className =? "kmag") (customFloating $ W.RationalRect 0.05 0.9 0.9 0.1)
-    , NS "mpv" "mpv" (className =? "mpv") (customFloating $ W.RationalRect 0.25 0.01 0.5 0.4)
-    ] where wmName = stringProperty "WM_NAME"
+    , NS "todo"    namedVim    (wmName =? "todo")       (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
+    , NS "kmag"    "kmag"      (className =? "kmag")    (customFloating $ W.RationalRect 0.05 0.9 0.9 0.1)
+    , NS "mpv"     "mpv"       (className =? "mpv")     (customFloating $ W.RationalRect 0.25 0.01 0.5 0.4)
+    ] where
+        wmName = stringProperty "WM_NAME"
+        namedVim = "namedVim.sh todo ~/Dropbox/todo/todo.txt"
 
 -- Prompt theme
 myXPConfig :: AConfig -> XPConfig
@@ -205,19 +207,11 @@ myManageHook :: ManageHook
 myManageHook = composeAll
     [ className =? "qutebrowser" --> unfloat
     , className =? "TeamViewer"  --> unfloat
-    , className =? "mpv"         --> (doRectFloat $ W.RationalRect 0.25 0.01 0.5 0.4)
     ]
     <+> floatNextHook
     <+> (namedScratchpadManageHook scratchpads)
         where unfloat = ask >>= doF . W.sink
 
--- hide NSP ws
--- other ws make clickable with xdotool
-formatWs "NSP"  = ""
-formatWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
-  where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
-
-xmobarTitleAllowedChars = [' '..'~']
 ------------------------------------------------------------------------
 -- Status bars and logging
 -- Perform an arbitrary action on each internal state change or X event.
@@ -240,6 +234,12 @@ myLogHook xmproc cfg = do
   where
     toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
     toOrdr (wsNames:layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
+    xmobarTitleAllowedChars = [' '..'~']
+    -- hide NSP ws
+    -- other ws make clickable with xdotool
+    formatWs "NSP"  = ""
+    formatWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
+      where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
 scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
