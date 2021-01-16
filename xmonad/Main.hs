@@ -88,17 +88,17 @@ cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 --
 myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
-    , ((0,            xK_XF86AudioRaiseVolume  ), spawn $ cmdSetVolume "+5%")
-    , ((0,            xK_XF86AudioLowerVolume  ), spawn $ cmdSetVolume "-5%")
-    , ((0,            xK_XF86MonBrightnessDown ), spawn $ cmdBrightness "5%-")
-    , ((modm,         xK_XF86MonBrightnessDown ), spawn $ cmdBrightness "1")
-    , ((0,            xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "+5%")
-    , ((modm,         xK_XF86MonBrightnessUp   ), spawn $ cmdBrightness "100%")
-    , ((0,            xK_Print                 ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
+    , ((0,            xK_XF86AudioRaiseVolume ), spawn $ cmdSetVolume "+5%")
+    , ((0,            xK_XF86AudioLowerVolume ), spawn $ cmdSetVolume "-5%")
+    , ((0,            xK_XF86MonBrightnessDown), spawn $ cmdBrightness "5%-")
+    , ((modm,         xK_XF86MonBrightnessDown), spawn $ cmdBrightness "1")
+    , ((0,            xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness "+5%")
+    , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness "100%")
+    , ((0,            xK_Print                ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
 
-    , ((modm,               xK_q   ), kill1)
-    , ((modm,               xK_w   ), spawn "~/bin/runner.sh")
-    , ((modm,               xK_f   ), spawn "notify-send --urgency=low 'sublayout submap'" >>
+    , ((modm,         xK_q                    ), kill1)
+    , ((modm,         xK_w                    ), spawn "~/bin/runner.sh")
+    , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'sublayout submap'" >>
         (submap . M.fromList $
             [ ((modm, xK_h), sendMessage $ pullGroup L)
             , ((modm, xK_n), sendMessage $ pullGroup U)
@@ -112,42 +112,38 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
             ]
         )
       )
-    , ((modm,               xK_p   ), spawn "clipmenu")
-    , ((modm,               xK_g   ), gsWindowGoto cfg)
-
-    , ((modm,               xK_a   ), calculatorPrompt (myXPConfig cfg) )
-    , ((modm,               xK_r   ), renameWorkspace (myXPConfig cfg))
-    , ((modm .|. shiftMask, xK_r   ), resetWorkspaceNames)
-    , ((modm,               xK_s   ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
-    , ((modm,               xK_t   ), promote)
-    , ((modm,               xK_d   ), sendMessage NextLayout)
-    , ((modm,               xK_z ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
-    , ((modm,               xK_x ), withFocused $ windows . W.sink)
-    , ((modm,               xK_c ), gsActionRunner (myCmds cfg conf) cfg)
-    , ((modm,               xK_b ), sendMessage MD.ToggleStruts)
-
-    , ((modm,               xK_j     ), spawn "~/bin/setxkbscript")
-    , ((modm,               xK_y     ), spawn "~/bin/terminal.sh")
-    , ((modm .|. shiftMask, xK_y     ), toggleFloatAllNew >> runLogHook)
-
-    , ((modm,               xK_h     ), sendMessage Shrink)
-    , ((modm .|. shiftMask, xK_h), sendMessage MirrorShrink)
-    , ((modm,               xK_n     ), BRNG.focusDown)
-    , ((modm .|. shiftMask, xK_n     ), windows W.swapDown  )
-    , ((modm,               xK_e     ), BRNG.focusUp  )
-    , ((modm .|. shiftMask, xK_e     ), windows W.swapUp    )
-    , ((modm,               xK_i     ), sendMessage Expand)
-    , ((modm .|. shiftMask, xK_i     ), sendMessage MirrorExpand)
-    , ((modm,               xK_o     ), namedScratchpadAction scratchpads "todo")
+    , ((modm,               xK_p        ), spawn "clipmenu")
+    , ((modm,               xK_g        ), gsWindowGoto cfg)
+    , ((modm,               xK_a        ), calculatorPrompt (myXPConfig cfg) )
+    , ((modm,               xK_r        ), renameWorkspace (myXPConfig cfg))
+    , ((modm .|. shiftMask, xK_r        ), resetWorkspaceNames)
+    , ((modm,               xK_s        ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
+    , ((modm,               xK_t        ), promote)
+    , ((modm,               xK_d        ), sendMessage NextLayout)
+    , ((modm,               xK_z        ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
+    , ((modm,               xK_x        ), withFocused $ windows . W.sink)
+    , ((modm,               xK_c        ), gsActionRunner (myCmds cfg conf) cfg)
+    , ((modm,               xK_b        ), sendMessage MD.ToggleStruts)
+    , ((modm,               xK_j        ), spawn "~/bin/setxkbscript")
+    , ((modm,               xK_y        ), spawn "~/bin/terminal.sh")
+    , ((modm .|. shiftMask, xK_y        ), toggleFloatAllNew >> runLogHook)
+    , ((modm,               xK_h        ), sendMessage Shrink)
+    , ((modm .|. shiftMask, xK_h        ), sendMessage MirrorShrink)
+    , ((modm,               xK_n        ), BRNG.focusDown)
+    , ((modm .|. shiftMask, xK_n        ), windows W.swapDown  )
+    , ((modm,               xK_e        ), BRNG.focusUp  )
+    , ((modm .|. shiftMask, xK_e        ), windows W.swapUp    )
+    , ((modm,               xK_i        ), sendMessage Expand)
+    , ((modm .|. shiftMask, xK_i        ), sendMessage MirrorExpand)
+    , ((modm,               xK_o        ), namedScratchpadAction scratchpads "todo")
     , ((modm,               xK_semicolon), namedScratchpadAction scratchpads "spotify")
-    , ((modm,               xK_oslash), namedScratchpadAction scratchpads "spotify")
-
-    , ((modm,               xK_period), windows W.focusMaster  )
-    , ((modm,               xK_m     ), sendMessage (IncMasterN (-1)))
-    , ((modm,               xK_comma ), sendMessage (IncMasterN 1))
-    , ((modm,               xK_slash), namedScratchpadAction scratchpads "mpv")
-    , ((modm,               xK_Tab   ), nextWS)
-    , ((modm .|. shiftMask, xK_Tab   ), prevWS)
+    , ((modm,               xK_oslash   ), namedScratchpadAction scratchpads "spotify")
+    , ((modm,               xK_period   ), windows W.focusMaster  )
+    , ((modm,               xK_m        ), sendMessage (IncMasterN (-1)))
+    , ((modm,               xK_comma    ), sendMessage (IncMasterN 1))
+    , ((modm,               xK_slash    ), namedScratchpadAction scratchpads "mpv")
+    , ((modm,               xK_Tab      ), nextWS)
+    , ((modm .|. shiftMask, xK_Tab      ), prevWS)
     ]
     ++
     [((m .|. modm, k), f i)
@@ -247,13 +243,6 @@ myLogHook xmproc cfg = do
 
 scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
-------------------------------------------------------------------------
--- Startup hook
--- Perform an arbitrary action each time xmonad starts or is restarted
--- with mod-q.  Used by, e.g., XMonad.Layout.PerWorkspace to initialize
--- per-workspace layout choices.
---
--- By default, do nothing.
 mouseHelpActions = [
     ("Cancel menu", return ())
   , ("Kill"      , kill1)
@@ -267,6 +256,14 @@ mouseHelpActions = [
   , ("copyToAll", windows copyToAll)
   , ("killAllOtherCopies", killAllOtherCopies)
   ]
+
+------------------------------------------------------------------------
+-- Startup hook
+-- Perform an arbitrary action each time xmonad starts or is restarted
+-- with mod-q.  Used by, e.g., XMonad.Layout.PerWorkspace to initialize
+-- per-workspace layout choices.
+--
+-- By default, do nothing.
 myStartupHook cfg = gsWithWindows mouseHelpActions cfg
 
 screenCornerStuff c = c { handleEventHook = handleEventHook c <+> screenCornerEventHook
