@@ -235,8 +235,7 @@ myLogHook xmproc cfg = do
     toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
     toOrdr (wsNames:layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
     xmobarTitleAllowedChars = [' '..'~']
-    -- hide NSP ws
-    -- other ws make clickable with xdotool
+    -- hide NSP ws rest of ws make clickable with xdotool
     formatWs "NSP"  = ""
     formatWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
       where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
@@ -301,7 +300,7 @@ defaults xmobarproc cfg = def {
         layoutHook         = myLayout cfg,
         manageHook         = myManageHook,
         -- handleEventHook    = myEventHook,
-        logHook            = (myLogHook xmobarproc cfg),
+        logHook            = myLogHook xmobarproc cfg,
         startupHook        = myStartupHook cfg
     }
 
