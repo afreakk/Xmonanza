@@ -5,10 +5,10 @@ ifHnsTop AConfig{cl_hostName="hanstop"} thn _ = thn
 ifHnsTop _ _ els = els
 
 data AConfig = AConfig
-  { cl_black :: String
-  , cl_current_line :: String
-  , cl_selection    :: String
-  , cl_comment      :: String
+  { cl_bg :: String
+  , cl_bg0_h :: String
+  , cl_bg0    :: String
+  , cl_bg1      :: String
   , cl_grey  :: String
   , cl_red   :: String
   , cl_orange:: String
@@ -17,6 +17,8 @@ data AConfig = AConfig
   , cl_aqua  :: String
   , cl_blue  :: String
   , cl_lilly :: String
+  , cl_fg0   :: String
+  , cl_fg1   :: String
   , cl_font :: String
   , cl_font_big :: String
   , cl_barHeight :: Int
@@ -29,18 +31,20 @@ getConfig :: IO AConfig
 getConfig = do
   hostName <- getHostName
   return AConfig 
-    { cl_black = "#2D2D2D"
-    , cl_current_line = "#393939"
-    , cl_selection    = "#515151"
-    , cl_comment      = "#999999"
-    , cl_grey  = "#CCCCCC"
-    , cl_red   = "#F2777A"
-    , cl_orange= "#f99157"
-    , cl_yellow= "#ffcc66"
-    , cl_green = "#99cc99"
-    , cl_aqua  = "#66CCCC"
-    , cl_blue  = "#6699cc"
-    , cl_lilly = "#CC99CC"
+    { cl_bg = "#282828"
+    , cl_bg0_h = "#1d2021"
+    , cl_bg0   = "#282828"
+    , cl_bg1   = "#3c3836"
+    , cl_grey  = "#a89984"
+    , cl_red   = "#cc241d"
+    , cl_orange= "#d65d0e"
+    , cl_yellow= "#d79921"
+    , cl_green = "#98971a"
+    , cl_aqua  = "#689d6a"
+    , cl_blue  = "#468588"
+    , cl_lilly = "#b16286"
+    , cl_fg0   = "#fbf1c7"
+    , cl_fg1   = "#fbdbb2"
     , cl_font  = "xft:Hack Nerd Font:size=15:Regular:antialias=true"
     , cl_font_big  = "xft:Hack Nerd Font:size=30:Regular:antialias=true"
     , cl_barHeight=if hostName == "hanstop" then 50 else 25

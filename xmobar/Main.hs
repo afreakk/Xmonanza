@@ -9,7 +9,7 @@ cmds cnf =
   [ Run $ DynNetwork
     ["-L", "0",
      "-H", "32000",
-     "--normal", cl_grey cnf,
+     "--normal", cl_fg0 cnf,
      "--high",cl_red cnf,
      "-t", "<rxvbar> <txvbar>"
     ] 50
@@ -17,12 +17,12 @@ cmds cnf =
     ["-L", "0",
      "--minwidth", "2",
      "--low", cl_aqua cnf,
-     "--normal", cl_grey cnf,
+     "--normal", cl_fg0 cnf,
      "--high", cl_red cnf,
      "-t", "<total>%"
     ] 50
   , Run $ Memory
-    ["--normal", cl_grey cnf,
+    ["--normal", cl_fg0 cnf,
      "--high", cl_red cnf,
      "--minwidth", "2",
      "-m", "2",
@@ -32,8 +32,8 @@ cmds cnf =
     ] 50
   , Run $ Date "%a %d %b %H:%M" "date" 600
   , Run $ Alsa "default" "Master"
-    ["--low", cl_grey cnf,
-     "--normal", cl_grey cnf,
+    ["--low", cl_fg0 cnf,
+     "--normal", cl_fg0 cnf,
      "--high", cl_red cnf,
      "-H", "100",
      "-t", "<status> <volume>%",
@@ -44,7 +44,7 @@ cmds cnf =
      "--lows", "奄",
      "--off", "婢",
      "--on", "",
-     "--onc", cl_grey cnf,
+     "--onc", cl_fg0 cnf,
      "--offc", cl_red cnf
     ]
   , Run $ MultiCoreTemp
@@ -52,7 +52,7 @@ cmds cnf =
      "-H", "75",
      "--minwidth", "2",
      "--low", cl_aqua cnf,
-     "--normal", cl_grey cnf,
+     "--normal", cl_fg0 cnf,
      "--high", cl_red cnf,
      "-t", "<avg>°C"
     ] 50
@@ -83,7 +83,7 @@ laptopCmds cnf = [
      "--off-icon-pattern", "\xf58b<left>% <timeleft> <watts>",
      "--idle-icon-pattern", "\xf578",
      "-L", "-20", "-H", "-10",
-     "-l", cl_grey cnf, "-m", cl_aqua cnf, "-h", cl_red cnf, "-p", cl_green cnf,
+     "-l", cl_fg0 cnf, "-m", cl_aqua cnf, "-h", cl_red cnf, "-p", cl_green cnf,
      "-a", "notify-send -u critical 'Battery running out!!'",
      "-A", "3"]
     50
@@ -118,8 +118,8 @@ config cnf =
          , textOffsets = []
          , font = cl_font cnf
          , additionalFonts = []
-         , bgColor = cl_black cnf
-         , fgColor = cl_grey cnf
+         , bgColor = cl_bg cnf
+         , fgColor = cl_fg0 cnf
          , alpha = 150
          -- , position = Top
          , position = TopSize L 100 (cl_barHeight cnf)
