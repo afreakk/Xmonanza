@@ -33,6 +33,7 @@ import ExtraKeyCodes
 import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
 import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
+import PassFork
 
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
@@ -77,6 +78,12 @@ myCmds cfg conf =
     , ("clip-to-feh"         , spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ("setactivesink"       , spawn "~/bin/setActiveSink")
     , ("manPrompt"           , manPrompt (myXPConfig cfg))
+
+    , ("passToClip"          , passPrompt (myXPConfig cfg))
+    , ("passAutoFill"        , passAutofillPrompt (myXPConfig cfg))
+    , ("passTypePassword"          , passTypePrompt (myXPConfig cfg))
+    , ("passTypeUsername"          , passTypeUsername (myXPConfig cfg))
+    , ("passEdit"            , passEditPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg

@@ -43,6 +43,9 @@ executables:
     - xmonad
     - xmonad-contrib
     - utf8-string
+    - directory
+    - filepath
+    - unix
   xmobar-afreak:
     main:                Main.hs
     source-dirs:         xmobar
