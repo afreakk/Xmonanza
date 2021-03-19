@@ -203,7 +203,7 @@ removePassword passLabel = spawn $ "pass rm --force \"" ++ escapeQuote passLabel
 -- | Edit a password stored for a given entry.
 --
 editPassword :: String -> X ()
-editPassword passLabel = spawn $ "pass edit \"" ++ escapeQuote passLabel ++ "\""
+editPassword passLabel = spawn $ "EDITOR=\"vim.sh\" pass edit \"" ++ escapeQuote passLabel ++ "\""
 
 typeWhatsInStdin = "tr -d '\n'|xdotool type --clearmodifiers --file -"
 extractUsername = "grep -oP 'username: \\K.*'"
