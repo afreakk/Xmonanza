@@ -57,6 +57,7 @@ executable xmonad-afreak
       LayoutHook
       NamedScratchpadRefocusLast
       PassFork
+      Utils
       XmobarUtils
       Paths_xmonanza
   hs-source-dirs:

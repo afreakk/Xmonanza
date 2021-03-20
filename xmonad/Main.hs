@@ -79,11 +79,14 @@ myCmds cfg conf =
     , ("setactivesink"       , spawn "~/bin/setActiveSink")
     , ("manPrompt"           , manPrompt (myXPConfig cfg))
 
-    , ("passToClip"          , passPrompt (myXPConfig cfg))
-    , ("passAutoFill"        , passAutofillPrompt (myXPConfig cfg))
-    , ("passTypePassword"          , passTypePrompt (myXPConfig cfg))
-    , ("passTypeUsername"          , passTypeUsername (myXPConfig cfg))
+    , ("passClipUsername"    , clipUsernamePrompt (myXPConfig cfg))
+    , ("passClipPassword"    , clipPasswordPrompt (myXPConfig cfg))
+    , ("passTypeAll"         , passAutofillPrompt (myXPConfig cfg))
+    , ("passTypePassword"    , passTypePrompt (myXPConfig cfg))
+    , ("passTypeUsername"    , passTypeUsername (myXPConfig cfg))
     , ("passEdit"            , passEditPrompt (myXPConfig cfg))
+    , ("passGenerateNew"     , passGenerateAndCopyNewPrompt (myXPConfig cfg))
+    , ("passGenerateExisting", passGenerateAndCopyExistingPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg

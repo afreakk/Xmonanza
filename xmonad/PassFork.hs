@@ -1,52 +1,12 @@
------------------------------------------------------------------------------
--- |
--- Module      :  PassFork
--- Copyright   :  (c) 2014 Igor Babuschkin, Antoine R. Dumont
--- License     :  BSD3-style (see LICENSE)
---
--- Maintainer  :  Antoine R. Dumont <eniotna.t@gmail.com>
--- Stability   :  unstable
--- Portability :  unportable
---
--- This module provides 5 <XMonad.Prompt>s to ease password
--- manipulation (generate, read, edit, remove):
---
--- - two to lookup passwords in the password-store; one of which
---   copies to the clipboard, and the other uses @xdotool@ to type the
---   password directly.
---
--- - one to generate a password for a given password label that the
---   user inputs.
---
--- - one to edit a password for a given password label that the user
---   inputs.
---
--- - one to delete a stored password for a given password label that
---   the user inputs.
---
--- All those prompts benefit from the completion system provided by
--- the module <XMonad.Prompt>.
---
--- The password store is setup through an environment variable
--- PASSWORD_STORE_DIR, or @$HOME\/.password-store@ if it is unset.
--- The editor is determined from the environment variable EDITOR.
---
--- Source:
---
--- - The <https://www.passwordstore.org/ password store>
---   implementation is <http://git.zx2c4.com/password-store here>.
---
--- - Inspired by <http://babushk.in/posts/combining-xmonad-and-pass.html>
---
------------------------------------------------------------------------------
-
 module PassFork (
                             -- * Usage
                             -- $usage
-                              passPrompt
+
+                              clipUsernamePrompt
+                            , clipPasswordPrompt
                             , passOTPPrompt
-                            , passGeneratePrompt
-                            , passGenerateAndCopyPrompt
+                            , passGenerateAndCopyNewPrompt
+                            , passGenerateAndCopyExistingPrompt
                             , passRemovePrompt
                             , passEditPrompt
                             , passTypePrompt
@@ -67,26 +27,7 @@ import System.Directory (getHomeDirectory)
 import System.FilePath (takeExtension, dropExtension, combine)
 import System.Posix.Env (getEnv)
 import XMonad.Util.Run (runProcessWithInput)
-
--- $usage
--- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
---
--- > import PassFork
---
--- Then add a keybinding for 'passPrompt', 'passGeneratePrompt',
--- 'passRemovePrompt', 'passEditPrompt' or 'passTypePrompt':
---
--- >   , ((modMask , xK_p)                              , passPrompt xpconfig)
--- >   , ((modMask .|. controlMask, xK_p)               , passGeneratePrompt xpconfig)
--- >   , ((modMask .|. shiftMask, xK_p)                 , passEditPrompt xpconfig)
--- >   , ((modMask .|. controlMask  .|. shiftMask, xK_p), passRemovePrompt xpconfig)
---
--- For detailed instructions on:
---
--- - editing your key bindings, see "XMonad.Doc.Extending#Editing_key_bindings".
---
--- - how to setup the password store, see <http://git.zx2c4.com/password-store/about/>
---
+import Utils
 
 type Predicate = String -> String -> Bool
 
@@ -124,39 +65,25 @@ mkPassPrompt promptLabel passwordFunction xpconfig = do
   passwords <- io (passwordStoreFolder >>= getPasswords)
   mkXPrompt (Pass promptLabel) xpconfig (getPassCompl passwords $ searchPredicate xpconfig) passwordFunction
 
--- | A prompt to retrieve a password from a given entry.
---
-passPrompt :: XPConfig -> X ()
-passPrompt = mkPassPrompt "Select password" selectPassword
+clipPasswordPrompt :: XPConfig -> X ()
+clipPasswordPrompt = mkPassPrompt "Select password" clipPassword
+
+clipUsernamePrompt = mkPassPrompt "Select username" clipUsername
 
 -- | A prompt to retrieve a OTP from a given entry.
 --
 passOTPPrompt :: XPConfig -> X ()
 passOTPPrompt = mkPassPrompt "Select OTP" selectOTP
 
--- | A prompt to generate a password for a given entry.
--- This can be used to override an already stored entry.
--- (Beware that no confirmation is asked)
---
-passGeneratePrompt :: XPConfig -> X ()
-passGeneratePrompt = mkPassPrompt "Generate password" generatePassword
+passGenerateAndCopyNewPrompt :: XPConfig -> X ()
+passGenerateAndCopyNewPrompt = mkPassPrompt "Generate password" generateAndCopyPasswordForNew
 
--- | A prompt to generate a password for a given entry and immediately copy it
--- to the clipboard.  This can be used to override an already stored entry.
--- (Beware that no confirmation is asked)
---
-passGenerateAndCopyPrompt :: XPConfig -> X ()
-passGenerateAndCopyPrompt = mkPassPrompt "Generate and copy password" generateAndCopyPassword
+passGenerateAndCopyExistingPrompt :: XPConfig -> X ()
+passGenerateAndCopyExistingPrompt = mkPassPrompt "Generate and copy password for existing" generateAndCopyPasswordForExisting
 
--- | A prompt to remove a password for a given entry.
--- (Beware that no confirmation is asked)
---
 passRemovePrompt :: XPConfig -> X ()
 passRemovePrompt = mkPassPrompt "Remove password" removePassword
 
--- | A prompt to type in a password for a given entry.
--- This doesn't touch the clipboard.
---
 passTypePrompt :: XPConfig -> X ()
 passTypePrompt = mkPassPrompt "Type password" typePassword
 
@@ -166,61 +93,46 @@ passAutofillPrompt = mkPassPrompt "autofill" typeUsernameAndPassword
 passTypeUsername :: XPConfig -> X ()
 passTypeUsername = mkPassPrompt "Type username" typeUsername
 
--- | A prompt to edit a given entry.
--- This doesn't touch the clipboard.
---
 passEditPrompt :: XPConfig -> X ()
 passEditPrompt = mkPassPrompt "Edit password" editPassword
 
--- | Select a password.
---
-selectPassword :: String -> X ()
-selectPassword passLabel = spawn $ "pass --clip \"" ++ escapeQuote passLabel ++ "\""
+clipPassword :: String -> X ()
+clipPassword passLabel = spawn $ "pass show --clip " ++ escapedPassLabel passLabel
+
+clipUsername :: String -> X ()
+clipUsername passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ stdinToClip
 
 -- | Select a OTP.
 --
 selectOTP :: String -> X ()
-selectOTP passLabel = spawn $ "pass otp --clip \"" ++ escapeQuote passLabel ++ "\""
+selectOTP passLabel = spawn $ "pass otp --clip " ++ escapedPassLabel passLabel
 
--- | Generate a 30 characters password for a given entry.
--- If the entry already exists, it is updated with a new password.
---
-generatePassword :: String -> X ()
-generatePassword passLabel = spawn $ "pass generate --force \"" ++ escapeQuote passLabel ++ "\" 30"
+generateAndCopyPasswordForNew :: String -> X ()
+generateAndCopyPasswordForNew passLabel = spawn $ "pass generate -c " ++ escapedPassLabel passLabel ++ " 30"
 
--- | Generate a 30 characters password for a given entry.
--- If the entry already exists, it is updated with a new password.
--- After generating the password, it is copied to the clipboard.
---
-generateAndCopyPassword :: String -> X ()
-generateAndCopyPassword passLabel = spawn $ "pass generate --force -c \"" ++ escapeQuote passLabel ++ "\" 30"
+generateAndCopyPasswordForExisting :: String -> X ()
+generateAndCopyPasswordForExisting passLabel = spawn $ "pass generate --in-place -c " ++ escapedPassLabel passLabel ++ " 30"
 
--- | Remove a password stored for a given entry.
---
 removePassword :: String -> X ()
-removePassword passLabel = spawn $ "pass rm --force \"" ++ escapeQuote passLabel ++ "\""
+removePassword passLabel = spawn $ "pass rm --force " ++ escapedPassLabel passLabel
 
--- | Edit a password stored for a given entry.
---
 editPassword :: String -> X ()
-editPassword passLabel = spawn $ "EDITOR=\"vim.sh\" pass edit \"" ++ escapeQuote passLabel ++ "\""
+editPassword passLabel = spawn $ "EDITOR=\"vim.sh\" pass edit " ++ escapedPassLabel passLabel
+
+typePassword :: String -> X ()
+typePassword passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ "|head -n1|"++ typeWhatsInStdin
+
+
+typeUsernameAndPassword :: String -> X ()
+typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$(pass show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
+
+typeUsername passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
+
+escapedPassLabel passLabel = "\""++ escapeQuote passLabel ++ "\""
 
 typeWhatsInStdin = "tr -d '\n'|xdotool type --clearmodifiers --file -"
 extractUsername = "grep -oP 'username: \\K.*'"
 extractPassword = "head -n1"
-escapedPassLabel passLabel = "\""++ escapeQuote passLabel ++ "\""
-
--- | Type a password stored for a given entry using xdotool.
---
-typePassword :: String -> X ()
-typePassword passLabel = spawn $ "pass \"" ++ escapeQuote passLabel
-  ++ "\"|head -n1|"++ typeWhatsInStdin
-
-
-typeUsernameAndPassword :: String -> X ()
-typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$(pass " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
-
-typeUsername passLabel = spawn $ "pass " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
 
 escapeQuote :: String -> String
 escapeQuote = concatMap escape

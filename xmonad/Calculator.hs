@@ -5,6 +5,7 @@ import           XMonad.Util.Run (runProcessWithInput)
 import XMonad
 import Data.Maybe
 import Data.Functor
+import Utils
 
 data CalculatorMode = CalculatorMode
 
@@ -13,7 +14,7 @@ instance XPrompt CalculatorMode where
     completionToCommand _ = id
 
 maybeValueToClipboard :: Show a => Maybe a -> X ()
-maybeValueToClipboard (Just v) = spawn ("echo -n " ++ (show v) ++ " | xclip -in -selection primary -f | xclip -in -selection clipboard &> /dev/null")
+maybeValueToClipboard (Just v) = spawn ("echo -n " ++ (show v) ++ " | "++stdinToClip++" &> /dev/null")
 maybeValueToClipboard Nothing  = return ()
 
 calculatorPrompt :: XPConfig -> X ()
