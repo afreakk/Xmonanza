@@ -23,6 +23,7 @@ import XMonad.Prompt.Man
 import XMonad.Prompt.XMonad
 import XMonad.Util.Run
 import XmobarUtils (xmobarShorten)
+import XMonad.Prompt.FuzzyMatch
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 
@@ -47,19 +48,21 @@ scratchpads =
 -- Prompt theme
 myXPConfig :: AConfig -> XPConfig
 myXPConfig cfg = def
-    { font                = cl_font cfg
-    , bgColor             = cl_bg cfg
-    , fgColor             = cl_fg0 cfg
-    , bgHLight            = cl_bg cfg
-    , fgHLight            = cl_lilly cfg
-    , borderColor         = cl_lilly cfg
-    , promptBorderWidth   = 1
-    , height              = fromIntegral $ cl_barHeight cfg
-    , position            = Bottom
-    , historySize         = 100
-    , historyFilter       = deleteConsecutive
-    , autoComplete        = Nothing
-    , completionKey       = (0,xK_Tab)
+    { font              = cl_font cfg
+    , bgColor           = cl_bg cfg
+    , fgColor           = cl_fg0 cfg
+    , bgHLight          = cl_bg cfg
+    , fgHLight          = cl_lilly cfg
+    , borderColor       = cl_lilly cfg
+    , promptBorderWidth = 1
+    , height            = fromIntegral $ cl_barHeight cfg
+    , position          = Bottom
+    , historySize       = 100
+    , historyFilter     = deleteConsecutive
+    , autoComplete      = Nothing
+    , completionKey     = (0,xK_Tab)
+    , searchPredicate   = fuzzyMatch
+    , sorter            = fuzzySort
     }
 
 myCmds cfg conf =
