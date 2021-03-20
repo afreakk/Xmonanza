@@ -28,6 +28,7 @@ import System.FilePath (takeExtension, dropExtension, combine)
 import System.Posix.Env (getEnv)
 import XMonad.Util.Run (runProcessWithInput)
 import Utils
+import XMonad.Util.Run
 
 type Predicate = String -> String -> Bool
 
@@ -117,7 +118,7 @@ removePassword :: String -> X ()
 removePassword passLabel = spawn $ "pass rm --force " ++ escapedPassLabel passLabel
 
 editPassword :: String -> X ()
-editPassword passLabel = spawn $ "EDITOR=\"vim.sh\" pass edit " ++ escapedPassLabel passLabel
+editPassword passLabel = runInTerm "" $ "pass edit " ++ escapedPassLabel passLabel
 
 typePassword :: String -> X ()
 typePassword passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ "|head -n1|"++ typeWhatsInStdin
