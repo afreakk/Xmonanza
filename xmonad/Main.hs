@@ -81,15 +81,17 @@ myCmds cfg conf =
     , ("clip-to-feh"         , spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ("setactivesink"       , spawn "~/bin/setActiveSink")
     , ("manPrompt"           , manPrompt (myXPConfig cfg))
+    ]
 
-    , ("passClipUsername"    , clipUsernamePrompt (myXPConfig cfg))
-    , ("passClipPassword"    , clipPasswordPrompt (myXPConfig cfg))
-    , ("passTypeAll"         , passAutofillPrompt (myXPConfig cfg))
-    , ("passTypePassword"    , passTypePrompt (myXPConfig cfg))
-    , ("passTypeUsername"    , passTypeUsername (myXPConfig cfg))
-    , ("passEdit"            , passEditPrompt (myXPConfig cfg))
-    , ("passGenerateNew"     , passGenerateAndCopyNewPrompt (myXPConfig cfg))
-    , ("passGenerateExisting", passGenerateAndCopyExistingPrompt (myXPConfig cfg))
+passCmds cfg =
+    [ ("ClipUsername"    , clipUsernamePrompt (myXPConfig cfg))
+    , ("ClipPassword"    , clipPasswordPrompt (myXPConfig cfg))
+    , ("TypeAll"         , passAutofillPrompt (myXPConfig cfg))
+    , ("TypePassword"    , passTypePrompt (myXPConfig cfg))
+    , ("TypeUsername"    , passTypeUsername (myXPConfig cfg))
+    , ("Edit"            , passEditPrompt (myXPConfig cfg))
+    , ("GenerateNew"     , passGenerateAndCopyNewPrompt (myXPConfig cfg))
+    , ("GenerateExisting", passGenerateAndCopyExistingPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg
@@ -111,6 +113,7 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness "100%")
     , ((0,            xK_Print                ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
 
+    , ((modm,         xK_grave                ), gsActionRunner (passCmds cfg) cfg)
     , ((modm,         xK_q                    ), kill1)
     , ((modm,         xK_w                    ), spawn "~/bin/runner.sh")
     , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'sublayout submap'" >>
