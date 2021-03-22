@@ -12,7 +12,7 @@ SRC_DIR=~/coding/Xmonanza/
 
 #check if src has changed`
 sum_file="xmonanza_sum_file"
-sum=$(find $SRC_DIR -type f | xargs -d'\n' -P0 -n1 md5sum | sort -k 2 | md5sum)
+sum=$(find $SRC_DIR -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum)
 if [ -f "$1" ] && [ -f "$sum_file" ] && [ "${sum}" = "$(cat ${sum_file})" ]; then
     echo "Skipping xmonanza build as content has not changed"
     exit
