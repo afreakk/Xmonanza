@@ -1,3 +1,3 @@
 module Utils (stdinToClip) where
 
-stdinToClip = "xclip -in -selection primary -f | xclip -in -selection clipboard"
+stdinToClip = "xclip -in -selection primary -f -r | xclip -in -selection clipboard -r"

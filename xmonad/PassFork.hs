@@ -5,6 +5,7 @@ module PassFork (
                               clipUsernamePrompt
                             , clipPasswordPrompt
                             , passOTPPrompt
+                            , passTypeOTPPrompt
                             , passGenerateAndCopyNewPrompt
                             , passGenerateAndCopyExistingPrompt
                             , passRemovePrompt
@@ -76,6 +77,9 @@ clipUsernamePrompt = mkPassPrompt "Select username" clipUsername
 passOTPPrompt :: XPConfig -> X ()
 passOTPPrompt = mkPassPrompt "Select OTP" selectOTP
 
+passTypeOTPPrompt :: XPConfig -> X ()
+passTypeOTPPrompt = mkPassPrompt "Select OTP" selectOTPAndType
+
 passGenerateAndCopyNewPrompt :: XPConfig -> X ()
 passGenerateAndCopyNewPrompt = mkPassPrompt "Generate password" generateAndCopyPasswordForNew
 
@@ -98,42 +102,43 @@ passEditPrompt :: XPConfig -> X ()
 passEditPrompt = mkPassPrompt "Edit password" editPassword
 
 clipPassword :: String -> X ()
-clipPassword passLabel = spawn $ "pass show --clip " ++ escapedPassLabel passLabel
+clipPassword passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ stdinToClip
 
 clipUsername :: String -> X ()
-clipUsername passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ stdinToClip
+clipUsername passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ stdinToClip
 
--- | Select a OTP.
---
 selectOTP :: String -> X ()
-selectOTP passLabel = spawn $ "pass otp --clip " ++ escapedPassLabel passLabel
+selectOTP passLabel = spawn $ unbufferedPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ stdinToClip
+
+selectOTPAndType :: String -> X ()
+selectOTPAndType passLabel = spawn $ unbufferedPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ typeWhatsInStdin
 
 generateAndCopyPasswordForNew :: String -> X ()
-generateAndCopyPasswordForNew passLabel = spawn $ "pass generate -c " ++ escapedPassLabel passLabel ++ " 30"
+generateAndCopyPasswordForNew passLabel = runInTerm "" $ "tmux new-session 'pass generate " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
 
 generateAndCopyPasswordForExisting :: String -> X ()
-generateAndCopyPasswordForExisting passLabel = spawn $ "pass generate --in-place -c " ++ escapedPassLabel passLabel ++ " 30"
+generateAndCopyPasswordForExisting passLabel = runInTerm "" $ "tmux new-session 'pass generate --in-place " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
 
 removePassword :: String -> X ()
-removePassword passLabel = spawn $ "pass rm --force " ++ escapedPassLabel passLabel
+removePassword passLabel = runInTerm "" $ "pass rm " ++ escapedPassLabel passLabel ++ " && sleep infinity'"
 
 editPassword :: String -> X ()
 editPassword passLabel = runInTerm "" $ "pass edit " ++ escapedPassLabel passLabel
 
 typePassword :: String -> X ()
-typePassword passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ "|head -n1|"++ typeWhatsInStdin
+typePassword passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | head -n1 | "++ typeWhatsInStdin
 
+typeUsername passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
 
 typeUsernameAndPassword :: String -> X ()
-typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$(pass show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
+typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$("++unbufferedPass++" show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
 
-typeUsername passLabel = spawn $ "pass show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
 
 escapedPassLabel passLabel = "\""++ escapeQuote passLabel ++ "\""
-
 typeWhatsInStdin = "tr -d '\n'|xdotool type --clearmodifiers --file -"
 extractUsername = "grep -oP 'username: \\K.*'"
 extractPassword = "head -n1"
+unbufferedPass = "unbuffer pass"
 
 escapeQuote :: String -> String
 escapeQuote = concatMap escape

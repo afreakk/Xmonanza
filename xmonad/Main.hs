@@ -37,10 +37,11 @@ import NamedScratchpadRefocusLast
 import PassFork
 
 scratchpads =
-    [ NS "spotify" "spotifywm" (className =? "Spotify") (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
-    , NS "todo"    namedVim    (wmName =? "todo")       (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
-    , NS "kmag"    "kmag"      (className =? "kmag")    (customFloating $ W.RationalRect 0.05 0.9 0.9 0.1)
-    , NS "mpv"     "mpv"       (className =? "mpv")     (customFloating $ W.RationalRect 0.25 0.01 0.5 0.4)
+    [ NS "spotify" "spotifywm" (className =? "Spotify")       (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
+    , NS "todo"    namedVim    (wmName =? "todo")             (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
+    , NS "kmag"    "kmag"      (className =? "kmag")          (customFloating $ W.RationalRect 0.05 0.9 0.9 0.1)
+    , NS "mpv"     "mpv"       (className =? "mpv")           (customFloating $ W.RationalRect 0.25 0.01 0.5 0.4)
+    , NS "authy"   "authy"     (className =? "Authy Desktop") (customFloating $ W.RationalRect 0.25 0.01 0.5 0.4)
     ] where
         wmName = stringProperty "WM_NAME"
         namedVim = "namedVim.sh todo ~/Dropbox/todo/todo.txt"
@@ -92,6 +93,8 @@ passCmds cfg =
     , ("Edit"            , passEditPrompt (myXPConfig cfg))
     , ("GenerateNew"     , passGenerateAndCopyNewPrompt (myXPConfig cfg))
     , ("GenerateExisting", passGenerateAndCopyExistingPrompt (myXPConfig cfg))
+    , ("ClipOtp"         , passOTPPrompt (myXPConfig cfg))
+    , ("TypeOtp"         , passTypeOTPPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg
@@ -156,6 +159,8 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_o        ), namedScratchpadAction scratchpads "todo")
     , ((modm,               xK_semicolon), namedScratchpadAction scratchpads "spotify")
     , ((modm,               xK_oslash   ), namedScratchpadAction scratchpads "spotify")
+    , ((modm,               xK_equal    ), namedScratchpadAction scratchpads "authy")
+    , ((modm,               xK_aring    ), namedScratchpadAction scratchpads "authy")
     , ((modm,               xK_period   ), windows W.focusMaster  )
     , ((modm,               xK_m        ), sendMessage (IncMasterN (-1)))
     , ((modm,               xK_comma    ), sendMessage (IncMasterN 1))
