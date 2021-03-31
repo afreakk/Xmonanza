@@ -35,6 +35,7 @@ import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
 import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
 import PassFork
+import Utils (floatingTermClass)
 
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify")       (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
@@ -95,6 +96,7 @@ passCmds cfg =
     , ("GenerateExisting", passGenerateAndCopyExistingPrompt (myXPConfig cfg))
     , ("ClipOtp"         , passOTPPrompt (myXPConfig cfg))
     , ("TypeOtp"         , passTypeOTPPrompt (myXPConfig cfg))
+    , ("insertOtp"       , insertOTPPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg
@@ -228,6 +230,7 @@ myManageHook :: ManageHook
 myManageHook = composeAll
     [ className =? "qutebrowser" --> unfloat
     , className =? "TeamViewer"  --> unfloat
+    , className =? floatingTermClass --> doFloat
     ]
     <+> floatNextHook
     <+> (namedScratchpadManageHook scratchpads)

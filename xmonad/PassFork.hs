@@ -11,6 +11,7 @@ module PassFork (
                             , passRemovePrompt
                             , passEditPrompt
                             , passTypePrompt
+                            , insertOTPPrompt
                             , passTypeUsername
                             , passAutofillPrompt
                             ) where
@@ -27,9 +28,8 @@ import XMonad.Prompt ( XPrompt
 import System.Directory (getHomeDirectory)
 import System.FilePath (takeExtension, dropExtension, combine)
 import System.Posix.Env (getEnv)
-import XMonad.Util.Run (runProcessWithInput)
-import Utils
-import XMonad.Util.Run
+import XMonad.Util.Run (runProcessWithInput, runInTerm)
+import Utils (stdinToClip, alacrittyFloatingOpt)
 
 type Predicate = String -> String -> Bool
 
@@ -80,6 +80,9 @@ passOTPPrompt = mkPassPrompt "Select OTP" selectOTP
 passTypeOTPPrompt :: XPConfig -> X ()
 passTypeOTPPrompt = mkPassPrompt "Select OTP" selectOTPAndType
 
+insertOTPPrompt :: XPConfig -> X ()
+insertOTPPrompt = mkPassPrompt "Select where to insert" insertTotpFromMaim
+
 passGenerateAndCopyNewPrompt :: XPConfig -> X ()
 passGenerateAndCopyNewPrompt = mkPassPrompt "Generate password" generateAndCopyPasswordForNew
 
@@ -101,6 +104,11 @@ passTypeUsername = mkPassPrompt "Type username" typeUsername
 passEditPrompt :: XPConfig -> X ()
 passEditPrompt = mkPassPrompt "Edit password" editPassword
 
+-- doesnt 
+insertTotpFromMaim :: String -> X ()
+-- insertTotpFromMaim passLabel = spawn $ "~/bin/insertOtp.sh"
+insertTotpFromMaim passLabel = runInTerm alacrittyFloatingOpt $ "/usr/bin/env fish -c 'pass otp append " ++ escapedPassLabel passLabel ++ " <(zbarimg (maim -q --select --hidecursor /dev/stdout | psub) --raw -q | psub); sleep infinity'"
+
 clipPassword :: String -> X ()
 clipPassword passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ stdinToClip
 
@@ -114,16 +122,16 @@ selectOTPAndType :: String -> X ()
 selectOTPAndType passLabel = spawn $ unbufferedPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ typeWhatsInStdin
 
 generateAndCopyPasswordForNew :: String -> X ()
-generateAndCopyPasswordForNew passLabel = runInTerm "" $ "tmux new-session 'pass generate " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
+generateAndCopyPasswordForNew passLabel = runInTerm alacrittyFloatingOpt $ "tmux new-session 'pass generate " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
 
 generateAndCopyPasswordForExisting :: String -> X ()
-generateAndCopyPasswordForExisting passLabel = runInTerm "" $ "tmux new-session 'pass generate --in-place " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
+generateAndCopyPasswordForExisting passLabel = runInTerm alacrittyFloatingOpt $ "tmux new-session 'pass generate --in-place " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
 
 removePassword :: String -> X ()
-removePassword passLabel = runInTerm "" $ "pass rm " ++ escapedPassLabel passLabel ++ " && sleep infinity'"
+removePassword passLabel = runInTerm alacrittyFloatingOpt $ "pass rm " ++ escapedPassLabel passLabel ++ " && sleep infinity'"
 
 editPassword :: String -> X ()
-editPassword passLabel = runInTerm "" $ "pass edit " ++ escapedPassLabel passLabel
+editPassword passLabel = runInTerm alacrittyFloatingOpt $ "pass edit " ++ escapedPassLabel passLabel
 
 typePassword :: String -> X ()
 typePassword passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | head -n1 | "++ typeWhatsInStdin
