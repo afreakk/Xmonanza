@@ -6,8 +6,7 @@ module PassFork (
                             , clipPasswordPrompt
                             , passOTPPrompt
                             , passTypeOTPPrompt
-                            , passGenerateAndCopyNewPrompt
-                            , passGenerateAndCopyExistingPrompt
+                            , passGeneratePrompt
                             , passRemovePrompt
                             , passEditPrompt
                             , passTypePrompt
@@ -72,8 +71,6 @@ clipPasswordPrompt = mkPassPrompt "Select password" clipPassword
 
 clipUsernamePrompt = mkPassPrompt "Select username" clipUsername
 
--- | A prompt to retrieve a OTP from a given entry.
---
 passOTPPrompt :: XPConfig -> X ()
 passOTPPrompt = mkPassPrompt "Select OTP" selectOTP
 
@@ -81,13 +78,10 @@ passTypeOTPPrompt :: XPConfig -> X ()
 passTypeOTPPrompt = mkPassPrompt "Select OTP" selectOTPAndType
 
 insertOTPPrompt :: XPConfig -> X ()
-insertOTPPrompt = mkPassPrompt "Select where to insert" insertTotpFromMaim
+insertOTPPrompt = mkPassPrompt "Select where to insert OTP" insertTotpFromMaim
 
-passGenerateAndCopyNewPrompt :: XPConfig -> X ()
-passGenerateAndCopyNewPrompt = mkPassPrompt "Generate password" generateAndCopyPasswordForNew
-
-passGenerateAndCopyExistingPrompt :: XPConfig -> X ()
-passGenerateAndCopyExistingPrompt = mkPassPrompt "Generate and copy password for existing" generateAndCopyPasswordForExisting
+passGeneratePrompt :: String -> XPConfig -> X ()
+passGeneratePrompt passOpts = mkPassPrompt "Generate password for" (passGenerate passOpts)
 
 passRemovePrompt :: XPConfig -> X ()
 passRemovePrompt = mkPassPrompt "Remove password" removePassword
@@ -96,7 +90,7 @@ passTypePrompt :: XPConfig -> X ()
 passTypePrompt = mkPassPrompt "Type password" typePassword
 
 passAutofillPrompt :: XPConfig -> X ()
-passAutofillPrompt = mkPassPrompt "autofill" typeUsernameAndPassword
+passAutofillPrompt = mkPassPrompt "Type usr & pw" typeUsernameAndPassword
 
 passTypeUsername :: XPConfig -> X ()
 passTypeUsername = mkPassPrompt "Type username" typeUsername
@@ -104,49 +98,45 @@ passTypeUsername = mkPassPrompt "Type username" typeUsername
 passEditPrompt :: XPConfig -> X ()
 passEditPrompt = mkPassPrompt "Edit password" editPassword
 
--- doesnt 
 insertTotpFromMaim :: String -> X ()
--- insertTotpFromMaim passLabel = spawn $ "~/bin/insertOtp.sh"
-insertTotpFromMaim passLabel = runInTerm alacrittyFloatingOpt $ "/usr/bin/env fish -c 'pass otp append " ++ escapedPassLabel passLabel ++ " <(zbarimg (maim -q --select --hidecursor /dev/stdout | psub) --raw -q | psub); sleep infinity'"
+insertTotpFromMaim passLabel = runInFishTermWithGPG_TTY $ "pass otp append " ++ escapedPassLabel passLabel ++ " <(zbarimg (maim -q --select --hidecursor /dev/stdout | psub) --raw -q | psub)"
 
 clipPassword :: String -> X ()
-clipPassword passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ stdinToClip
+clipPassword passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ stdinToClip
 
 clipUsername :: String -> X ()
-clipUsername passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ stdinToClip
+clipUsername passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ stdinToClip
 
 selectOTP :: String -> X ()
-selectOTP passLabel = spawn $ unbufferedPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ stdinToClip
+selectOTP passLabel = spawn $ workaroundPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ stdinToClip
 
 selectOTPAndType :: String -> X ()
-selectOTPAndType passLabel = spawn $ unbufferedPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ typeWhatsInStdin
+selectOTPAndType passLabel = spawn $ workaroundPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ typeWhatsInStdin
 
-generateAndCopyPasswordForNew :: String -> X ()
-generateAndCopyPasswordForNew passLabel = runInTerm alacrittyFloatingOpt $ "tmux new-session 'pass generate " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
-
-generateAndCopyPasswordForExisting :: String -> X ()
-generateAndCopyPasswordForExisting passLabel = runInTerm alacrittyFloatingOpt $ "tmux new-session 'pass generate --in-place " ++ escapedPassLabel passLabel ++ " 30 && sleep infinity'"
+passGenerate :: String -> String -> X ()
+passGenerate passOpts passLabel = runInFishTermWithGPG_TTY $ "pass generate -c " ++ passOpts ++ " " ++ escapedPassLabel passLabel ++ " 30 ; sleep infinity"
 
 removePassword :: String -> X ()
-removePassword passLabel = runInTerm alacrittyFloatingOpt $ "pass rm " ++ escapedPassLabel passLabel ++ " && sleep infinity'"
+removePassword passLabel = runInFishTermWithGPG_TTY $ "pass rm " ++ escapedPassLabel passLabel
 
 editPassword :: String -> X ()
-editPassword passLabel = runInTerm alacrittyFloatingOpt $ "pass edit " ++ escapedPassLabel passLabel
+editPassword passLabel = runInFishTermWithGPG_TTY $ "pass edit " ++ escapedPassLabel passLabel
 
 typePassword :: String -> X ()
-typePassword passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | head -n1 | "++ typeWhatsInStdin
+typePassword passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ typeWhatsInStdin
 
-typeUsername passLabel = spawn $ unbufferedPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
+typeUsername passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
 
 typeUsernameAndPassword :: String -> X ()
-typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$("++unbufferedPass++" show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
+typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$("++workaroundPass++" show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
 
+runInFishTermWithGPG_TTY toRun = runInTerm alacrittyFloatingOpt $ "/usr/bin/env fish -c 'set -x GPG_TTY (tty);" ++ toRun ++ "'"
 
 escapedPassLabel passLabel = "\""++ escapeQuote passLabel ++ "\""
 typeWhatsInStdin = "tr -d '\n'|xdotool type --clearmodifiers --file -"
 extractUsername = "grep -oP 'username: \\K.*'"
 extractPassword = "head -n1"
-unbufferedPass = "unbuffer pass"
+workaroundPass = "export GPG_TTY='workaround'; pass"
 
 escapeQuote :: String -> String
 escapeQuote = concatMap escape
