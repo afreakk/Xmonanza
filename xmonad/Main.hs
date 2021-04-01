@@ -86,19 +86,23 @@ myCmds cfg conf =
     ]
 
 passCmds cfg =
-    [ ("ClipUsername"    , clipUsernamePrompt (myXPConfig cfg))
-    , ("ClipPassword"    , clipPasswordPrompt (myXPConfig cfg))
-    , ("TypeAll"         , passAutofillPrompt (myXPConfig cfg))
-    , ("TypePassword"    , passTypePrompt (myXPConfig cfg))
-    , ("TypeUsername"    , passTypeUsername (myXPConfig cfg))
-    , ("Edit"            , passEditPrompt (myXPConfig cfg))
-    , ("GenerateNew"     , passGeneratePrompt "" (myXPConfig cfg))
-    , ("GenerateNewNoSymbols" , passGeneratePrompt "-n" (myXPConfig cfg))
-    , ("GenerateExisting", passGeneratePrompt "--in-place" (myXPConfig cfg))
+    [ ("ClipUsername"             , passClipUsernamePrompt (myXPConfig cfg))
+    , ("ClipPassword"             , passClipPasswordPrompt (myXPConfig cfg))
+
+    , ("Autofill"                 , passAutofillPrompt (myXPConfig cfg))
+    , ("TypePassword"             , passTypePasswordPrompt (myXPConfig cfg))
+    , ("TypeUsername"             , passTypeUsernamePrompt (myXPConfig cfg))
+
+    , ("Edit"                     , passEditPrompt (myXPConfig cfg))
+
+    , ("ClipOTP"                  , passClipOTPPrompt (myXPConfig cfg))
+    , ("TypeOTP"                  , passTypeOTPPrompt (myXPConfig cfg))
+    , ("AppendOTP"                , passAppendOTPPrompt (myXPConfig cfg))
+
+    , ("GenerateNew"              , passGeneratePrompt "" (myXPConfig cfg))
+    , ("GenerateNewNoSymbols"     , passGeneratePrompt "-n" (myXPConfig cfg))
+    , ("GenerateExisting"         , passGeneratePrompt "--in-place" (myXPConfig cfg))
     , ("GenerateExistingNoSymbols", passGeneratePrompt "--in-place -n" (myXPConfig cfg))
-    , ("ClipOtp"         , passOTPPrompt (myXPConfig cfg))
-    , ("TypeOtp"         , passTypeOTPPrompt (myXPConfig cfg))
-    , ("insertOtp"       , insertOTPPrompt (myXPConfig cfg))
     ]
 
 cmdBrightness arg = "brightnessctl set " ++ arg

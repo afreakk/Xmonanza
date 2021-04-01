@@ -2,16 +2,16 @@ module PassFork (
                             -- * Usage
                             -- $usage
 
-                              clipUsernamePrompt
-                            , clipPasswordPrompt
-                            , passOTPPrompt
+                              passClipUsernamePrompt
+                            , passClipPasswordPrompt
+                            , passClipOTPPrompt
                             , passTypeOTPPrompt
                             , passGeneratePrompt
                             , passRemovePrompt
                             , passEditPrompt
-                            , passTypePrompt
-                            , insertOTPPrompt
-                            , passTypeUsername
+                            , passTypePasswordPrompt
+                            , passAppendOTPPrompt
+                            , passTypeUsernamePrompt
                             , passAutofillPrompt
                             ) where
 
@@ -66,19 +66,19 @@ mkPassPrompt promptLabel passwordFunction xpconfig = do
   passwords <- io (passwordStoreFolder >>= getPasswords)
   mkXPrompt (Pass promptLabel) xpconfig (getPassCompl passwords $ searchPredicate xpconfig) passwordFunction
 
-clipPasswordPrompt :: XPConfig -> X ()
-clipPasswordPrompt = mkPassPrompt "Select password" clipPassword
+passClipPasswordPrompt :: XPConfig -> X ()
+passClipPasswordPrompt = mkPassPrompt "Select password" clipPassword
 
-clipUsernamePrompt = mkPassPrompt "Select username" clipUsername
+passClipUsernamePrompt = mkPassPrompt "Select username" clipUsername
 
-passOTPPrompt :: XPConfig -> X ()
-passOTPPrompt = mkPassPrompt "Select OTP" selectOTP
+passClipOTPPrompt :: XPConfig -> X ()
+passClipOTPPrompt = mkPassPrompt "Select OTP to clip" clipOTP
 
 passTypeOTPPrompt :: XPConfig -> X ()
-passTypeOTPPrompt = mkPassPrompt "Select OTP" selectOTPAndType
+passTypeOTPPrompt = mkPassPrompt "Select OTP to type" typeOTP
 
-insertOTPPrompt :: XPConfig -> X ()
-insertOTPPrompt = mkPassPrompt "Select where to insert OTP" insertTotpFromMaim
+passAppendOTPPrompt :: XPConfig -> X ()
+passAppendOTPPrompt = mkPassPrompt "Select where to append OTP secret" appendOTP
 
 passGeneratePrompt :: String -> XPConfig -> X ()
 passGeneratePrompt passOpts = mkPassPrompt "Generate password for" (passGenerate passOpts)
@@ -86,20 +86,20 @@ passGeneratePrompt passOpts = mkPassPrompt "Generate password for" (passGenerate
 passRemovePrompt :: XPConfig -> X ()
 passRemovePrompt = mkPassPrompt "Remove password" removePassword
 
-passTypePrompt :: XPConfig -> X ()
-passTypePrompt = mkPassPrompt "Type password" typePassword
+passTypePasswordPrompt :: XPConfig -> X ()
+passTypePasswordPrompt = mkPassPrompt "Type password" typePassword
 
 passAutofillPrompt :: XPConfig -> X ()
-passAutofillPrompt = mkPassPrompt "Type usr & pw" typeUsernameAndPassword
+passAutofillPrompt = mkPassPrompt "Type usr & pw" autofill
 
-passTypeUsername :: XPConfig -> X ()
-passTypeUsername = mkPassPrompt "Type username" typeUsername
+passTypeUsernamePrompt :: XPConfig -> X ()
+passTypeUsernamePrompt = mkPassPrompt "Type username" typeUsername
 
 passEditPrompt :: XPConfig -> X ()
-passEditPrompt = mkPassPrompt "Edit password" editPassword
+passEditPrompt = mkPassPrompt "Edit password" edit
 
-insertTotpFromMaim :: String -> X ()
-insertTotpFromMaim passLabel = runInFishTermWithGPG_TTY $ "pass otp append " ++ escapedPassLabel passLabel ++ " <(zbarimg (maim -q --select --hidecursor /dev/stdout | psub) --raw -q | psub)"
+appendOTP :: String -> X ()
+appendOTP passLabel = runInFishTermWithGPG_TTY $ "pass otp append " ++ escapedPassLabel passLabel ++ " <(zbarimg (maim -q --select --hidecursor /dev/stdout | psub) --raw -q | psub)"
 
 clipPassword :: String -> X ()
 clipPassword passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ stdinToClip
@@ -107,11 +107,11 @@ clipPassword passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel 
 clipUsername :: String -> X ()
 clipUsername passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ stdinToClip
 
-selectOTP :: String -> X ()
-selectOTP passLabel = spawn $ workaroundPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ stdinToClip
+clipOTP :: String -> X ()
+clipOTP passLabel = spawn $ workaroundPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ stdinToClip
 
-selectOTPAndType :: String -> X ()
-selectOTPAndType passLabel = spawn $ workaroundPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ typeWhatsInStdin
+typeOTP :: String -> X ()
+typeOTP passLabel = spawn $ workaroundPass ++ " otp " ++ escapedPassLabel passLabel ++ " | " ++ typeWhatsInStdin
 
 passGenerate :: String -> String -> X ()
 passGenerate passOpts passLabel = runInFishTermWithGPG_TTY $ "pass generate -c " ++ passOpts ++ " " ++ escapedPassLabel passLabel ++ " 30 ; sleep infinity"
@@ -119,16 +119,19 @@ passGenerate passOpts passLabel = runInFishTermWithGPG_TTY $ "pass generate -c "
 removePassword :: String -> X ()
 removePassword passLabel = runInFishTermWithGPG_TTY $ "pass rm " ++ escapedPassLabel passLabel
 
-editPassword :: String -> X ()
-editPassword passLabel = runInFishTermWithGPG_TTY $ "pass edit " ++ escapedPassLabel passLabel
+edit :: String -> X ()
+edit passLabel = runInFishTermWithGPG_TTY $ "pass edit " ++ escapedPassLabel passLabel
 
 typePassword :: String -> X ()
 typePassword passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractPassword ++ " | " ++ typeWhatsInStdin
 
 typeUsername passLabel = spawn $ workaroundPass ++ " show " ++ escapedPassLabel passLabel ++ " | " ++ extractUsername ++ " | " ++ typeWhatsInStdin
 
-typeUsernameAndPassword :: String -> X ()
-typeUsernameAndPassword passLabel = spawn $ "IFS= txt=$("++workaroundPass++" show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
+autofill :: String -> X ()
+autofill passLabel = spawn $ "IFS= txt=$("++workaroundPass++" show " ++ escapedPassLabel passLabel ++ ") && echo $txt |"++extractUsername++"|"++ typeWhatsInStdin ++" && xdotool key Tab && echo $txt |"++extractPassword++"|" ++ typeWhatsInStdin
+
+
+-- | UTILS below
 
 runInFishTermWithGPG_TTY toRun = runInTerm alacrittyFloatingOpt $ "/usr/bin/env fish -c 'set -x GPG_TTY (tty);" ++ toRun ++ "'"
 
