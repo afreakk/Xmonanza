@@ -21,7 +21,7 @@ import XMonad.Layout.Tabbed
 import XMonad.Prompt
 import XMonad.Prompt.Man
 import XMonad.Prompt.XMonad
-import XMonad.Util.Run
+import XMonad.Util.Run (runInTerm, hPutStrLn, spawnPipe)
 import XmobarUtils (xmobarShorten)
 import XMonad.Prompt.FuzzyMatch
 import qualified XMonad.StackSet as W
@@ -35,7 +35,7 @@ import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
 import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
 import PassFork
-import Utils (floatingTermClass)
+import Utils (floatingTermClass, alacrittyFloatingOpt)
 
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify")       (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
@@ -83,6 +83,16 @@ myCmds cfg conf =
     , ("clip-to-feh"         , spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
     , ("setactivesink"       , spawn "~/bin/setActiveSink")
     , ("manPrompt"           , manPrompt (myXPConfig cfg))
+    , ("optype"              , gsActionRunner (optypeCmds cfg) cfg)
+    ]
+
+optypeCmds cfg =
+    [ ("ClipUsername"             , runInTerm alacrittyFloatingOpt "optype -c -u")
+    , ("ClipPassword"             , runInTerm alacrittyFloatingOpt "optype -c -p")
+
+    , ("Autofill"                 , spawn "optype")
+    , ("TypePassword"             , spawn "optype -p")
+    , ("TypeUsername"             , spawn "optype -u")
     ]
 
 passCmds cfg =
