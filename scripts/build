@@ -4,19 +4,17 @@ set -e
 STACK_COMMAND=stack
 ENV_FILE=~/.xmonad/.env
 
-if [ -f $ENV_FILE ]; then
-    source $ENV_FILE
-fi
+# if you want to set STACK_COMMAND="stack --nix" (like me, you can do it in .env)
+[ -f $ENV_FILE ] && source $ENV_FILE
+
 # The directory holding your source code and stack.yaml file:
 SRC_DIR=~/coding/Xmonanza/
 
 #check if src has changed`
 sum_file="xmonanza_sum_file"
-sum=$(find $SRC_DIR -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum)
-if [ -f "$1" ] && [ -f "$sum_file" ] && [ "${sum}" = "$(cat ${sum_file})" ]; then
-    echo "Skipping xmonanza build as content has not changed"
-    exit
-fi
+sum=$(find $SRC_DIR -type f -not -path '*/\.*' -print0 | sort -z | xargs -0 sha1sum | sha1sum)
+[ -f "$1" ] && [ -f "$sum_file" ] && [ "${sum}" = "$(cat ${sum_file})" ] &&  { echo "Skipping xmonanza build as source has not changed"; exit; }
+echo "Source has changed, building xmonanza"
 echo -n "${sum}" > ${sum_file}
 
 # The name of the executable produced by stack.  This comes from the
