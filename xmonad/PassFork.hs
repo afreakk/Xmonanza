@@ -13,6 +13,7 @@ module PassFork (
                             , passAppendOTPPrompt
                             , passTypeUsernamePrompt
                             , passAutofillPrompt
+                            , passShowPrompt
                             ) where
 
 import XMonad.Core
@@ -98,6 +99,12 @@ passTypeUsernamePrompt = mkPassPrompt "Type username" typeUsername
 passEditPrompt :: XPConfig -> X ()
 passEditPrompt = mkPassPrompt "Edit password" edit
 
+passShowPrompt :: XPConfig -> X ()
+passShowPrompt = mkPassPrompt "Edit password" showAll
+
+showAll :: String -> X ()
+showAll passLabel = runInFishTermWithGPG_TTY $ "pass show " ++ escapedPassLabel passLabel ++ " | " ++ showInVimScratchPad
+
 appendOTP :: String -> X ()
 appendOTP passLabel = runInFishTermWithGPG_TTY $ "pass otp append " ++ escapedPassLabel passLabel ++ " <(zbarimg (maim -q --select --hidecursor /dev/stdout | psub) --raw -q | psub)"
 
@@ -135,6 +142,7 @@ autofill passLabel = spawn $ "IFS= txt=$("++workaroundPass++" show " ++ escapedP
 
 runInFishTermWithGPG_TTY toRun = runInTerm alacrittyFloatingOpt $ "/usr/bin/env fish -c 'set -x GPG_TTY (tty);" ++ toRun ++ "'"
 
+showInVimScratchPad = "vim --cmd \"set nowrap|setlocal bt=nofile\" -"
 escapedPassLabel passLabel = "\""++ escapeQuote passLabel ++ "\""
 typeWhatsInStdin = "tr -d '\n'|xdotool type --clearmodifiers --file -"
 extractUsername = "grep -oP 'username: \\K.*'"

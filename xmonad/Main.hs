@@ -104,6 +104,7 @@ passCmds cfg =
     , ("TypeUsername"             , passTypeUsernamePrompt (myXPConfig cfg))
 
     , ("Edit"                     , passEditPrompt (myXPConfig cfg))
+    , ("Show"                     , passShowPrompt (myXPConfig cfg))
 
     , ("ClipOTP"                  , passClipOTPPrompt (myXPConfig cfg))
     , ("TypeOTP"                  , passTypeOTPPrompt (myXPConfig cfg))
