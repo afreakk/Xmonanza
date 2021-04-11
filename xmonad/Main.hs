@@ -81,6 +81,7 @@ myCmds cfg conf =
     , ("dunstctl-action"     , spawn "dunstctl action")
     , ("clip-to~/img.png"    , spawn $ cmdMaimSelect "~/img.png")
     , ("clip-to-feh"         , spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip ++ "&& xclip -selection clipboard -t image/png -o | feh -")
+    , ("clip-to-server"      , spawn "clipImgToNixPiHttp")
     , ("setactivesink"       , spawn "~/bin/setActiveSink")
     , ("manPrompt"           , manPrompt (myXPConfig cfg))
     , ("optype"              , gsActionRunner (optypeCmds cfg) cfg)
