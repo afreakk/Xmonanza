@@ -139,7 +139,12 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,         xK_grave                ), gsActionRunner (passCmds cfg) cfg)
     , ((modm,         xK_q                    ), kill1)
     , ((modm,         xK_w                    ), spawn "~/bin/runner.sh")
-    , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'sublayout submap'" >>
+    , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'sublayout submap: \n\
+                                                       \ modm+{h,n,e,i} = pullGroup {L,U,D,R}\n\
+                                                       \ m = MergeAll\n\
+                                                       \ u = UnMerge\n\
+                                                       \ n = focusDown\n\
+                                                       \ e = focusUp\n'" >>
         (submap . M.fromList $
             [ ((modm, xK_h), sendMessage $ pullGroup L)
             , ((modm, xK_n), sendMessage $ pullGroup U)
@@ -149,7 +154,6 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
             , ((0,    xK_u), withFocused (sendMessage . UnMerge))
             , ((0,    xK_n), onGroup W.focusDown')
             , ((0,    xK_e), onGroup W.focusUp')
-            , ((0,    xK_t), onGroup swapMasterOnStack)
             ]
         )
       )
@@ -203,8 +207,6 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
         | (key, sc) <- zip [xK_l, xK_u] [0..]
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
-
-swapMasterOnStack (W.Stack f u d) = W.Stack f [] $ reverse u ++ d
 
 resetWorkspaceNames :: X ()
 resetWorkspaceNames = sequence_ $ map (`setWorkspaceName` "") workspaceNames
