@@ -68,7 +68,7 @@ cmds cnf =
     , ("partly cloudy", "\xe379")
     , ("mostly cloudy", "\xe37e")
     , ("considerable cloudiness", "\xfa8f")]
-  ["-t", "<skyConditionS> <tempC>° <windKmh>km/h"] 600
+  ["-t", "<skyConditionS> <tempC>° <windMs>m/s <windCardinal> <windAzimuth> <pressure>"] 600
   , Run $ UnsafeStdinReader
   ]
 
