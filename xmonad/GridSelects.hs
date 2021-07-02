@@ -15,7 +15,7 @@ gsWithWindows extraActions cfg = withFocused $ \w -> do
             ++ [ ("Move to " ++ tag, windows $ W.shift tag)
             | tag <- tags ] )
 
-gsWindowGoto cfg = goToSelected $ (myGsConfigWithDefaultColorizer cfg) {gs_cellwidth = cl_gsCellWidthBig cfg}
+gsWindowGoto cfg = goToSelected $ (myGsConfigWithDefaultColorizer cfg) {gs_cellwidth = cl_gsCellWidthBig cfg }
 
 gsActionRunner actions cfg = do
     runSelectedAction (myGsConfig cfg) actions
@@ -38,6 +38,7 @@ myGsConfig cfg = (buildDefaultGSConfig colorizer)
 myGsConfigBigFonts cfg = (myGsConfig cfg)
             { gs_font = cl_font_big cfg
             , gs_cellwidth = cl_gsCellWidthBig cfg
+            , gs_cellheight = cl_gsCellHeightBig cfg
             }
 
 colorizer :: a -> Bool -> X (String, String)

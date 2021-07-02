@@ -18,6 +18,7 @@ data AConfig = AConfig
   , cl_hostName :: String
   , cl_gsCellWidth :: Integer
   , cl_gsCellWidthBig :: Integer
+  , cl_gsCellHeightBig :: Integer
   } deriving (Show)
 
 getConfig :: IO AConfig
@@ -36,5 +37,6 @@ getConfig = do
     , cl_barHeight=if hostName == "hanstop" then 55 else 25
     , cl_hostName=hostName
     , cl_gsCellWidth = if hostName == "hanstop" then 500 else 400
-    , cl_gsCellWidthBig = if hostName == "hanstop" then 600 else 500
+    , cl_gsCellWidthBig = if hostName == "hanstop" then 750 else 500
+    , cl_gsCellHeightBig = if hostName == "hanstop" then 120 else 80
     }
