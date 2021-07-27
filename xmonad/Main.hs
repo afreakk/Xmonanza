@@ -286,8 +286,8 @@ myLogHook xmproc cfg = do
     , ppExtras = [willFloatAllNewPP id]
     } >>= dynamicLogWithPP
   where
-    toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
-    toOrdr (wsNames:layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
+    toOrdr (wsNames:_layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
+    toOrdr (wsNames:_layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
     toOrdr _ = ["wtf something weird"]
     xmobarTitleAllowedChars = [' '..'~']
     -- hide NSP ws rest of ws make clickable with xdotool
