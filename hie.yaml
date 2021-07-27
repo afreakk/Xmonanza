@@ -1,12 +1,58 @@
 cradle:
   stack:
-    - path: "./src"
+    - path: "./shared"
       component: "xmonanza:lib"
-    - path: "./test"
-      component: "xmonanza:test:test"
+
+    - path: "./xmobar/Main.hs"
+      component: "xmonanza:exe:xmobar-afreak"
+
+    - path: "./xmobar/Configuration.hs"
+      component: "xmonanza:exe:xmobar-afreak"
+
+    - path: "./xmobar/Paths_xmonanza.hs"
+      component: "xmonanza:exe:xmobar-afreak"
+
+    - path: "./xmonad/Main.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/BackAndForth.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/BooleanLayout.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/Calculator.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/EwmhDesktopsPromote.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/ExtraKeyCodes.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/GridSelects.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/LayoutHook.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/NamedScratchpadRefocusLast.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/PassFork.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/Utils.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/XmobarUtils.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
+    - path: "./xmonad/Paths_xmonanza.hs"
+      component: "xmonanza:exe:xmonad-afreak"
+
     - path: "./benchmark"
       component: "xmonanza:test:benchmark"
-    - path: "./xmonad"
-      component: "xmonanza:exe:xmonad-afreak"
-    - path: "./xmobar"
-      component: "xmonanza:exe:xmobar-afreak"
+
+    - path: "./test"
+      component: "xmonanza:test:test"

@@ -1,11 +1,10 @@
 module Calculator (calculatorPrompt) where
-import           XMonad (MonadIO, X)
 import           XMonad.Prompt (XPrompt, showXPrompt, completionToCommand, XPConfig, mkXPrompt)
 import           XMonad.Util.Run (runProcessWithInput)
 import XMonad
 import Data.Maybe
-import Data.Functor
 import Utils
+import Control.Monad
 
 data CalculatorMode = CalculatorMode
 
@@ -14,15 +13,19 @@ instance XPrompt CalculatorMode where
     completionToCommand _ = id
 
 maybeValueToClipboard :: Show a => Maybe a -> X ()
-maybeValueToClipboard (Just v) = spawn ("echo -n " ++ (show v) ++ " | "++stdinToClip++" &> /dev/null")
+maybeValueToClipboard (Just v) = spawn ("echo -n " ++ show v ++ " | "++stdinToClip++" &> /dev/null")
 maybeValueToClipboard Nothing  = return ()
 
 calculatorPrompt :: XPConfig -> X ()
-calculatorPrompt c = mkXPrompt CalculatorMode c doCalc (\e -> (doCalc e) <&> listToMaybe >>= maybeValueToClipboard)
+calculatorPrompt c = mkXPrompt CalculatorMode c doCalc calcToClipboard
+
+calcToClipboard :: [Char] -> X ()
+calcToClipboard = doCalc >=> (maybeValueToClipboard . listToMaybe)
 
 doCalc :: MonadIO m => [Char] -> m [String]
 doCalc [] = return []
-doCalc s = fmap lines $ fmap stripTab $ runProcessWithInput "calc" [s] ""
+doCalc s = fmap (lines . stripTab) (runProcessWithInput "calc" [s] "")
 
+stripTab :: [a] -> [a]
 stripTab (_:xs) = xs
 stripTab [] = []

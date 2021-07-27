@@ -35,6 +35,7 @@ library
 executable xmobar-afreak
   main-is: Main.hs
   other-modules:
+      Configuration
       Paths_xmonanza
   hs-source-dirs:
       xmobar

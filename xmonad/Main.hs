@@ -9,7 +9,6 @@ import XMonad.Actions.WorkspaceNames
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.FloatNext
 import XMonad.Hooks.ManageDocks as MD
-import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.RefocusLast
 import XMonad.Hooks.ScreenCorners
 import XMonad.Hooks.UrgencyHook
@@ -17,10 +16,8 @@ import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 import XMonad.Layout.BoringWindows as BRNG
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.SubLayouts
-import XMonad.Layout.Tabbed
 import XMonad.Prompt
 import XMonad.Prompt.Man
-import XMonad.Prompt.XMonad
 import XMonad.Util.Run (runInTerm, hPutStrLn, spawnPipe)
 import XmobarUtils (xmobarShorten)
 import XMonad.Prompt.FuzzyMatch
@@ -36,7 +33,10 @@ import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
 import PassFork
 import Utils (floatingTermClass, alacrittyFloatingOpt)
+import qualified GHC.IO.Handle as GHC.IO.Handle.Types
+import XMonad.Layout.LayoutModifier
 
+scratchpads :: [NamedScratchpad]
 scratchpads =
     [ NS "spotify" "spotifywm" (className =? "Spotify")       (customFloating $ W.RationalRect 0.5 0.01 0.5 0.98)
     , NS "todo"    namedVim    (wmName =? "todo")             (customFloating $ W.RationalRect (1/6) (1/2) (2/3) (1/3))
@@ -67,13 +67,14 @@ myXPConfig cfg = def
     , sorter            = fuzzySort
     }
 
+myCmds :: AConfig -> XConfig Layout -> [(String, X ())]
 myCmds cfg conf =
     [ ("default-layout"      , setLayout $ XM.layoutHook conf)
     , ("recompile"           , spawn "xmonad-afreak --recompile; xmonad-afreak --restart;")
     , ("kill"                , kill1)
     , ("refresh"             , refresh)
-    , ("quit-wm"             , io $ exitWith ExitSuccess)
-    , ("hotkeys"             , spawn ("grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42"))
+    , ("quit-wm"             , io exitSuccess)
+    , ("hotkeys"             , spawn "grep 'xK_' ~/coding/Xmonanza/xmonad/Main.hs | dmenu -l 42")
     , ("dunstctl-history-pop", spawn "dunstctl history-pop")
     , ("dunstctl-context"    , spawn "dunstctl context")
     , ("dunstctl-close"      , spawn "dunstctl close")
@@ -87,6 +88,7 @@ myCmds cfg conf =
     , ("optype"              , gsActionRunner (optypeCmds cfg) cfg)
     ]
 
+optypeCmds :: AConfig -> [([Char], X ())]
 optypeCmds cfg =
     [ ("ClipUsername"             , runInTerm alacrittyFloatingOpt "optype -c -u")
     , ("ClipPassword"             , runInTerm alacrittyFloatingOpt "optype -c -p")
@@ -96,6 +98,7 @@ optypeCmds cfg =
     , ("TypeUsername"             , spawn "optype -u")
     ]
 
+passCmds :: AConfig -> [([Char], X ())]
 passCmds cfg =
     [ ("ClipUsername"             , passClipUsernamePrompt (myXPConfig cfg))
     , ("ClipPassword"             , passClipPasswordPrompt (myXPConfig cfg))
@@ -117,16 +120,21 @@ passCmds cfg =
     , ("GenerateExistingNoSymbols", passGeneratePrompt "--in-place -n" (myXPConfig cfg))
     ]
 
+cmdBrightness :: String -> String
 cmdBrightness arg = "brightnessctl set " ++ arg
+cmdSetVolume :: String -> String
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
+cmdMaimSelect :: String -> String
 cmdMaimSelect out = "maim --select --hidecursor --format png " ++ out
+cmdPipeImgToClip :: String
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 
 
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
-myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
+myKeys :: AConfig -> XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
+myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
     , ((0,            xK_XF86AudioRaiseVolume ), spawn $ cmdSetVolume "+5%")
     , ((0,            xK_XF86AudioLowerVolume ), spawn $ cmdSetVolume "-5%")
@@ -165,7 +173,7 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
     , ((modm,               xK_s        ), spawn "~/bin/openTerminalWithCurrentPwd.sh")
     , ((modm,               xK_t        ), promote)
     , ((modm,               xK_d        ), sendMessage NextLayout)
-    , ((modm,               xK_z        ), withFocused $ windows . (`W.float` (W.RationalRect 0 0 1 1)))
+    , ((modm,               xK_z        ), withFocused $ windows . (`W.float` W.RationalRect 0 0 1 1))
     , ((modm,               xK_x        ), withFocused $ windows . W.sink)
     , ((modm,               xK_c        ), gsActionRunner (myCmds cfg conf) cfg)
     , ((modm,               xK_b        ), sendMessage MD.ToggleStruts)
@@ -209,7 +217,7 @@ myKeys cfg conf@(XConfig {XM.modMask = modm}) = M.fromList $
         , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
 
 resetWorkspaceNames :: X ()
-resetWorkspaceNames = sequence_ $ map (`setWorkspaceName` "") workspaceNames
+resetWorkspaceNames = mapM_ (`setWorkspaceName` "") workspaceNames
 
 workspaceNames :: [String]
 workspaceNames = map show $ [1..9 :: Int] ++ [0]
@@ -219,15 +227,16 @@ workspaceKeys = [xK_1..xK_9] ++ [xK_0]
 
 ------------------------------------------------------------------------
 -- Mouse bindings: default actions bound to mouse events
-myMouseBindings (XConfig {XM.modMask = modm}) = M.fromList $
+myMouseBindings :: XConfig l -> M.Map (KeyMask, Button) (Window -> X ())
+myMouseBindings XConfig {XM.modMask = modm} = M.fromList
     -- mod-button1, Set the window to floating mode and move by dragging
-    [ ((modm, button1), (\w -> XM.focus w >> mouseMoveWindow w
-                                       >> windows W.shiftMaster))
+    [ ((modm, button1), \w -> XM.focus w >> mouseMoveWindow w
+                                       >> windows W.shiftMaster)
     -- mod-button2, Raise the window to the top of the stack
-    , ((modm, button2), (\w -> XM.focus w >> windows W.shiftMaster))
+    , ((modm, button2), \w -> XM.focus w >> windows W.shiftMaster)
     -- mod-button3, Set the window to floating mode and resize by dragging
-    , ((modm, button3), (\w -> XM.focus w >> mouseResizeWindow w
-                                       >> windows W.shiftMaster))
+    , ((modm, button3), \w -> XM.focus w >> mouseResizeWindow w
+                                       >> windows W.shiftMaster)
     -- you may also bind events to the mouse scroll wheel (button4 and button5)
     ]
 
@@ -253,7 +262,7 @@ myManageHook = composeAll
     , className =? floatingTermClass --> doFloat
     ]
     <+> floatNextHook
-    <+> (namedScratchpadManageHook scratchpads)
+    <+> namedScratchpadManageHook scratchpads
         where unfloat = ask >>= doF . W.sink
 
 ------------------------------------------------------------------------
@@ -261,10 +270,11 @@ myManageHook = composeAll
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
+myLogHook :: GHC.IO.Handle.Types.Handle -> AConfig -> X ()
 myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 64 100)
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 32 100)
     , ppCurrent = xmobarColor (cl_lilly cfg) "" .formatWs
     , ppHidden  = formatWs
     , ppTitle   = xmobarColor (cl_lilly cfg) ""
@@ -278,14 +288,17 @@ myLogHook xmproc cfg = do
   where
     toOrdr (wsNames:layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
     toOrdr (wsNames:layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
+    toOrdr _ = ["wtf something weird"]
     xmobarTitleAllowedChars = [' '..'~']
     -- hide NSP ws rest of ws make clickable with xdotool
     formatWs "NSP"  = ""
     formatWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
       where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
+scrollableWsNames :: String -> String
 scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
+mouseHelpActions :: [(String, X ())]
 mouseHelpActions = [
     ("Cancel menu", return ())
   , ("Kill"      , kill1)
@@ -307,21 +320,25 @@ mouseHelpActions = [
 -- per-workspace layout choices.
 --
 -- By default, do nothing.
-myStartupHook cfg = gsWithWindows mouseHelpActions cfg
+myStartupHook :: AConfig -> X ()
+myStartupHook = gsWithWindows mouseHelpActions
 
 screenCornerStuff c = c { handleEventHook = handleEventHook c <+> screenCornerEventHook
                         , startupHook     = addScreenCorner SCUpperRight $ startupHook c
                         , layoutHook      = screenCornerLayoutHook $ layoutHook c
                         }
 
+ewmhAndFullScreen :: XConfig l -> XConfig l
 ewmhAndFullScreen c = ewmh $ c { handleEventHook = handleEventHook c <+> fullscreenEventHook }
 
+main :: IO ()
 main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
-  xmonad . ewmhAndFullScreen . applyRefocusLastHooks . ( withUrgencyHook NoUrgencyHook ) . MD.docks . screenCornerStuff $ defaults xmobarproc cfg
+  xmonad . ewmhAndFullScreen . applyRefocusLastHooks . withUrgencyHook NoUrgencyHook . MD.docks . screenCornerStuff $ defaults xmobarproc cfg
 
-applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> (refocusLastWhen isFloat)
+applyRefocusLastHooks :: XConfig l -> XConfig (ModifiedLayout RefocusLastLayoutHook l)
+applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> refocusLastWhen isFloat
                             , layoutHook      = refocusLastLayoutHook $ layoutHook c
                             --, logHook         = logHook c <+> refocusLastLogHook
                             }

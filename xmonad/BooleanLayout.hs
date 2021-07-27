@@ -4,7 +4,6 @@ module BooleanLayout (BooleanLayout (..)) where
 
 import           XMonad
 import qualified XMonad.StackSet as W
-import           Data.Maybe (fromMaybe)
 
 data BooleanLayout l1 l2 a = BooleanLayout Bool (l1 a) (l2 a)
     deriving (Read, Show)
@@ -12,10 +11,10 @@ data BooleanLayout l1 l2 a = BooleanLayout Bool (l1 a) (l2 a)
 instance (LayoutClass l1 a, LayoutClass l2 a, Show a) => LayoutClass (BooleanLayout l1 l2) a where
     runLayout (W.Workspace i p@(BooleanLayout bool lt lf) ms) r 
         | bool = do
-            (wrs, mlt') <- runLayout (W.Workspace i lt ms) r
+            (wrs, _mlt') <- runLayout (W.Workspace i lt ms) r
             return (wrs, Just p)
         | otherwise = do
-            (wrs, mlt') <- runLayout (W.Workspace i lf ms) r
+            (wrs, _mlt') <- runLayout (W.Workspace i lf ms) r
             return (wrs, Just p)
 
     handleMessage (BooleanLayout bool lt lf) m
