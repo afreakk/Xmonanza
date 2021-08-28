@@ -19,6 +19,7 @@ import XMonad.Layout.SubLayouts
 import XMonad.Prompt
 import XMonad.Prompt.Man
 import XMonad.Util.Run (runInTerm, hPutStrLn, spawnPipe)
+import XMonad.Actions.FloatKeys
 import XmobarUtils (xmobarShorten)
 import XMonad.Prompt.FuzzyMatch
 import qualified XMonad.StackSet as W
@@ -35,6 +36,8 @@ import PassFork
 import Utils (floatingTermClass, alacrittyFloatingOpt)
 import qualified GHC.IO.Handle as GHC.IO.Handle.Types
 import XMonad.Layout.LayoutModifier
+
+modalmap s = submap $ M.map (>> modalmap s) s
 
 scratchpads :: [NamedScratchpad]
 scratchpads =
@@ -147,22 +150,32 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     , ((modm,         xK_grave                ), gsActionRunner (passCmds cfg) cfg)
     , ((modm,         xK_q                    ), kill1)
     , ((modm,         xK_w                    ), spawn "~/bin/runner.sh")
-    , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'sublayout submap: \n\
-                                                       \ modm+{h,n,e,i} = pullGroup {L,U,D,R}\n\
-                                                       \ m = MergeAll\n\
-                                                       \ u = UnMerge\n\
-                                                       \ n = focusDown\n\
-                                                       \ e = focusUp\n'" >>
-        (submap . M.fromList $
-            [ ((modm, xK_h), sendMessage $ pullGroup L)
-            , ((modm, xK_n), sendMessage $ pullGroup U)
-            , ((modm, xK_e), sendMessage $ pullGroup D)
-            , ((modm, xK_i), sendMessage $ pullGroup R)
-            , ((0,    xK_m), withFocused (sendMessage . MergeAll))
-            , ((0,    xK_u), withFocused (sendMessage . UnMerge))
-            , ((0,    xK_n), onGroup W.focusDown')
-            , ((0,    xK_e), onGroup W.focusUp')
-            ]
+    , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'float: \n\
+                                                       \ modm+{h,n,e,i} = resize\n\
+                                                       \ modm+shift+{h,n,e,i} = resize(more)\n\
+                                                       \ {h,n,e,i} = move\n\
+                                                       \ shift+{h,n,e,i} = move(more)\n\'" >>
+        (modalmap . M.fromList $
+             [ ((modm,            xK_h     ), withFocused (keysResizeWindow (-10,  0) (0,0)))
+             , ((modm,            xK_n     ), withFocused (keysResizeWindow (  0, 10) (0,0)))
+             , ((modm,            xK_e     ), withFocused (keysResizeWindow (  0,-10) (0,0)))
+             , ((modm,            xK_i     ), withFocused (keysResizeWindow ( 10,  0) (0,0)))
+
+             , ((modm .|. shiftMask, xK_h     ), withFocused (keysResizeWindow (-20,  0) (0,0)))
+             , ((modm .|. shiftMask, xK_n     ), withFocused (keysResizeWindow (  0, 20) (0,0)))
+             , ((modm .|. shiftMask, xK_e     ), withFocused (keysResizeWindow (  0,-20) (0,0)))
+             , ((modm .|. shiftMask, xK_i     ), withFocused (keysResizeWindow ( 20,  0) (0,0)))
+
+             , ((0,               xK_h     ), withFocused (keysMoveWindow   (-10,  0)))
+             , ((0,               xK_n     ), withFocused (keysMoveWindow   (  0, 10)))
+             , ((0,               xK_e     ), withFocused (keysMoveWindow   (  0,-10)))
+             , ((0,               xK_i     ), withFocused (keysMoveWindow   ( 10,  0)))
+
+             , ((shiftMask,       xK_h     ), withFocused (keysMoveWindow   (-20,  0)))
+             , ((shiftMask,       xK_n     ), withFocused (keysMoveWindow   (  0, 20)))
+             , ((shiftMask,       xK_e     ), withFocused (keysMoveWindow   (  0,-20)))
+             , ((shiftMask,       xK_i     ), withFocused (keysMoveWindow   ( 20,  0)))
+             ]
         )
       )
     , ((modm,               xK_p        ), spawn "clipmenu")
@@ -176,6 +189,24 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     , ((modm,               xK_z        ), withFocused $ windows . (`W.float` W.RationalRect 0 0 1 1))
     , ((modm,               xK_x        ), withFocused $ windows . W.sink)
     , ((modm,               xK_c        ), gsActionRunner (myCmds cfg conf) cfg)
+    , ((modm,               xK_v        ), spawn "notify-send --urgency=low 'sublayout: \n\
+                                                       \ modm+{h,n,e,i} = pullGroup {L,U,D,R}\n\
+                                                       \ m = MergeAll\n\
+                                                       \ u = UnMerge\n\
+                                                       \ n = focusDown\n\
+                                                       \ e = focusUp\n'" >>
+        (modalmap . M.fromList $
+            [ ((modm, xK_h), sendMessage $ pullGroup L)
+            , ((modm, xK_n), sendMessage $ pullGroup U)
+            , ((modm, xK_e), sendMessage $ pullGroup D)
+            , ((modm, xK_i), sendMessage $ pullGroup R)
+            , ((0,    xK_m), withFocused (sendMessage . MergeAll))
+            , ((0,    xK_u), withFocused (sendMessage . UnMerge))
+            , ((0,    xK_n), onGroup W.focusDown')
+            , ((0,    xK_e), onGroup W.focusUp')
+            ]
+        )
+      )
     , ((modm,               xK_b        ), sendMessage MD.ToggleStruts)
     , ((modm,               xK_j        ), spawn "~/bin/setxkbscript")
     , ((modm,               xK_y        ), spawn "~/bin/terminal.sh")
