@@ -20,6 +20,7 @@ import XMonad.Prompt
 import XMonad.Prompt.Man
 import XMonad.Util.Run (runInTerm, hPutStrLn, spawnPipe)
 import XMonad.Actions.FloatKeys
+import qualified XMonad.Util.ExtensibleState as XS
 import XmobarUtils (xmobarShorten)
 import XMonad.Prompt.FuzzyMatch
 import qualified XMonad.StackSet as W
@@ -37,7 +38,22 @@ import Utils (floatingTermClass, alacrittyFloatingOpt)
 import qualified GHC.IO.Handle as GHC.IO.Handle.Types
 import XMonad.Layout.LayoutModifier
 
-modalmap s = submap $ M.map (>> modalmap s) s
+newtype ModeName
+ = ModeName {getModeName :: Maybe String}
+ deriving (Typeable, Read, Show)
+
+instance ExtensionClass ModeName where
+  initialValue = ModeName Nothing
+  extensionType = PersistentExtension
+
+-- modalmap s = submap $ M.map (>> modalmap s) s
+modalmap :: M.Map (KeyMask, KeySym) (X ()) -> String -> X ()
+modalmap s modeName = do
+  XS.put (ModeName (Just modeName))
+  ask >>= logHook . config
+  submap $ M.map (>> modalmap s modeName) s
+  XS.put (ModeName Nothing)
+  ask >>= logHook . config
 
 scratchpads :: [NamedScratchpad]
 scratchpads =
@@ -155,7 +171,7 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
                                                        \ modm+shift+{h,n,e,i} = resize(more)\n\
                                                        \ {h,n,e,i} = move\n\
                                                        \ shift+{h,n,e,i} = move(more)\n\'" >>
-        (modalmap . M.fromList $
+        (modalmap  . M.fromList $
              [ ((modm,            xK_h     ), withFocused (keysResizeWindow (-10,  0) (0,0)))
              , ((modm,            xK_n     ), withFocused (keysResizeWindow (  0, 10) (0,0)))
              , ((modm,            xK_e     ), withFocused (keysResizeWindow (  0,-10) (0,0)))
@@ -176,7 +192,7 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
              , ((shiftMask,       xK_e     ), withFocused (keysMoveWindow   (  0,-20)))
              , ((shiftMask,       xK_i     ), withFocused (keysMoveWindow   ( 20,  0)))
              ]
-        )
+        )"submap: Float"
       )
     , ((modm,               xK_p        ), spawn "clipmenu")
     , ((modm,               xK_g        ), gsWindowGoto cfg)
@@ -195,7 +211,7 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
                                                        \ u = UnMerge\n\
                                                        \ n = focusDown\n\
                                                        \ e = focusUp\n'" >>
-        (modalmap . M.fromList $
+        (modalmap  . M.fromList $
             [ ((modm, xK_h), sendMessage $ pullGroup L)
             , ((modm, xK_n), sendMessage $ pullGroup U)
             , ((modm, xK_e), sendMessage $ pullGroup D)
@@ -205,7 +221,7 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
             , ((0,    xK_n), onGroup W.focusDown')
             , ((0,    xK_e), onGroup W.focusUp')
             ]
-        )
+        )"submap: sublayout"
       )
     , ((modm,               xK_b        ), sendMessage MD.ToggleStruts)
     , ((modm,               xK_j        ), spawn "~/bin/setxkbscript")
@@ -296,6 +312,8 @@ myManageHook = composeAll
     <+> namedScratchpadManageHook scratchpads
         where unfloat = ask >>= doF . W.sink
 
+
+fgXmobarColor color = xmobarColor color ""
 ------------------------------------------------------------------------
 -- Status bars and logging
 -- Perform an arbitrary action on each internal state change or X event.
@@ -306,15 +324,15 @@ myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
     { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 32 100)
-    , ppCurrent = xmobarColor (cl_lilly cfg) "" .formatWs
+    , ppCurrent = fgXmobarColor (cl_lilly cfg) . formatWs
     , ppHidden  = formatWs
-    , ppTitle   = xmobarColor (cl_lilly cfg) ""
+    , ppTitle   = fgXmobarColor (cl_lilly cfg)
     , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
-    , ppUrgent  = xmobarColor (cl_aqua  cfg) "" . formatWs
+    , ppUrgent  = fgXmobarColor (cl_aqua  cfg) . formatWs
     , ppOrder   = toOrdr
     , ppSep     = " | "
-    , ppVisible = xmobarColor (cl_green cfg) ""
-    , ppExtras = [willFloatAllNewPP id]
+    , ppVisible = fgXmobarColor (cl_green cfg)
+    , ppExtras = [willFloatAllNewPP (fgXmobarColor (cl_red cfg) . ("FloatNext: " ++)), fmap (fgXmobarColor (cl_aqua cfg)) . getModeName <$> (XS.get :: X ModeName)]
     } >>= dynamicLogWithPP
   where
     toOrdr (wsNames:_layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
