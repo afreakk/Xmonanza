@@ -101,15 +101,17 @@ stationaryCmds cnf =
   , Run $ DiskU [("/mnt/fastdisk", hddTmp "fastdisk"), ("/", hddTmp "root"), ("/boot", hddTmp "boot"), ("/mnt/bigdisk", hddTmp "bigdisk")] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
   ]
 
+alsaLol = "<action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action>"
+
 laptopTmpl :: [Char]
 laptopTmpl =
   "%UnsafeStdinReader%}\
-  \{ %ENZV% | %alsa:default:Master% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
+  \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
 stationaryTmpl :: [Char]
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
-  \{%disku% ETH %ethprice% | BTC %btcprice% | %ENZV% | <action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action> | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
+  \{%disku% ETH %ethprice% | BTC %btcprice% | %ENZV% | " ++ alsaLol ++ " | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
 
 config :: AConfig -> Config
 config cnf =
