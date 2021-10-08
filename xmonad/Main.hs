@@ -1,4 +1,4 @@
-import AConfig (getConfig, AConfig (..), ifHnsTop)
+import AConfig (getConfig, AConfig (..), ifLaptop)
 import System.Exit
 import XMonad as XM
 import XMonad.Actions.CopyWindow
@@ -323,7 +323,7 @@ myLogHook :: GHC.IO.Handle.Types.Handle -> AConfig -> X ()
 myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifHnsTop cfg 42 100)
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifLaptop cfg 42 100)
     , ppCurrent = fgXmobarColor (cl_lilly cfg) . formatWs
     , ppHidden  = formatWs
     , ppTitle   = fgXmobarColor (cl_lilly cfg)

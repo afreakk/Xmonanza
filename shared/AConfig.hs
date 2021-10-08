@@ -1,8 +1,9 @@
-module AConfig (getConfig, AConfig(..), ifHnsTop) where
+module AConfig (getConfig, AConfig(..), ifLaptop) where
 import Network.HostName
 
-ifHnsTop AConfig{cl_hostName="hanstop"} thn _ = thn
-ifHnsTop _ _ els = els
+ifLaptop AConfig{cl_hostName="hanstop"} thn _ = thn
+ifLaptop AConfig{cl_hostName="nimbus2k"} thn _ = thn
+ifLaptop _ _ els = els
 
 data AConfig = AConfig
   { cl_bg :: String

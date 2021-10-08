@@ -1,6 +1,6 @@
 module Configuration (config) where
 import Xmobar
-import AConfig (ifHnsTop, AConfig (..))
+import AConfig (ifLaptop, AConfig (..))
 
 cmds :: AConfig -> [Runnable]
 cmds cnf = 
@@ -138,10 +138,10 @@ config cnf =
          , iconRoot = ""
          , allDesktops = True
          , overrideRedirect = True
-         , commands = cmds cnf ++ ifHnsTop cnf
+         , commands = cmds cnf ++ ifLaptop cnf
             (laptopCmds cnf)
             (stationaryCmds cnf)
          , sepChar = "%"
          , alignSep = "}{"
-         , template = ifHnsTop cnf laptopTmpl stationaryTmpl
+         , template = ifLaptop cnf laptopTmpl stationaryTmpl
          }
