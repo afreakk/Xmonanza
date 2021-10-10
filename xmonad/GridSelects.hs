@@ -27,12 +27,14 @@ myGsConfigWithDefaultColorizer cfg = def
             { gs_font = cl_font cfg
             , gs_cellwidth = cl_gsCellWidth cfg
             , gs_navigate = navNSearch
+            , gs_cellheight = cl_gsCellHeight cfg
             }
 
 myGsConfig cfg = (buildDefaultGSConfig colorizer)
             { gs_font = cl_font cfg
             , gs_cellwidth = cl_gsCellWidth cfg
             , gs_navigate = navNSearch
+            , gs_cellheight = cl_gsCellHeight cfg
             }
 
 myGsConfigBigFonts cfg = (myGsConfig cfg)

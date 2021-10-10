@@ -1,17 +1,16 @@
 module Configuration (config) where
-import Xmobar
-import AConfig (ifLaptop, AConfig (..))
+import Xmobar hiding (date)
+import AConfig (ifLaptop, AConfig (..), HstNm(..), hstNmCond)
 
-cmds :: AConfig -> [Runnable]
-cmds cnf = 
-  [ Run $ DynNetwork
+dynnetwork cnf = Run $ DynNetwork
     ["-L", "0",
      "-H", "32000",
      "--normal", cl_fg0 cnf,
      "--high",cl_red cnf,
      "-t", "<rxvbar> <txvbar>"
     ] 50
-  , Run $ MultiCpu
+
+multicpu cnf = Run $ MultiCpu
     ["-L", "0",
      "--minwidth", "2",
      "--low", cl_aqua cnf,
@@ -19,7 +18,8 @@ cmds cnf =
      "--high", cl_red cnf,
      "-t", "<total>%"
     ] 50
-  , Run $ Memory
+
+memory cnf = Run $ Memory
     ["--normal", cl_fg0 cnf,
      "--high", cl_red cnf,
      "--minwidth", "2",
@@ -28,8 +28,10 @@ cmds cnf =
      "-H", "90",
      "-t","<usedratio>%"
     ] 50
-  , Run $ Date "%a %d %b %H:%M" "date" 600
-  , Run $ Alsa "default" "Master"
+
+date = Run $ Date "%a %d %b %H:%M" "date" 600
+
+alsa cnf = Run $ Alsa "default" "Master"
     ["--low", cl_fg0 cnf,
      "--normal", cl_fg0 cnf,
      "--high", cl_red cnf,
@@ -45,7 +47,7 @@ cmds cnf =
      "--onc", cl_fg0 cnf,
      "--offc", cl_red cnf
     ]
-  , Run $ MultiCoreTemp
+multicoretemp cnf = Run $ MultiCoreTemp
     ["-L", "25",
      "-H", "75",
      "--minwidth", "2",
@@ -54,7 +56,8 @@ cmds cnf =
      "--high", cl_red cnf,
      "-t", "<avg>°C"
     ] 50
-  , Run $ WeatherX "ENZV"
+
+enzv = Run $ WeatherX "ENZV"
     [ ("clear", "望")
     , ("sunny", "\xe30d")
     , ("mostly clear", "\xe37b")
@@ -67,12 +70,8 @@ cmds cnf =
     , ("mostly cloudy", "\xe37e")
     , ("considerable cloudiness", "\xfa8f")]
   ["-t", "<skyConditionS> <tempC>° <windMs>m/s <windCardinal> <windAzimuth> <pressure>"] 600
-  , Run UnsafeStdinReader
-  ]
-
-laptopCmds :: AConfig -> [Runnable]
-laptopCmds cnf = [
-  Run $ BatteryP ["BAT0"]
+unsafeStdinReader  = Run UnsafeStdinReader
+battery cnf = Run $ BatteryP ["BAT0"]
     ["-t", "<leftipat>",
      "-L", "10", "-H", "80", "-p", "3",
      "--minwidth", "3",
@@ -85,7 +84,12 @@ laptopCmds cnf = [
      "-a", "notify-send -u critical 'Battery running out!!'",
      "-A", "3"]
     50
-  ]
+
+nvidiaTemp = Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "nvidiaTemp" 50
+btcprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
+ethprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
+disku = Run $ DiskU [("/mnt/fastdisk", hddTmp "fastdisk"), ("/", hddTmp "root"), ("/boot", hddTmp "boot"), ("/mnt/bigdisk", hddTmp "bigdisk")] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
+coretemp = Run $ CoreTemp ["-t", "<core0>|<core1>C", "-L", "40", "-H", "60", "-l", "lightblue", "-n", "gray90", "-h", "red"] 50
 
 cryptoPrice :: [Char] -> [Char]
 cryptoPrice pair = "curl 'https://api.coinbase.com/v2/prices/"++pair++"/spot?currency=USD' -s | jq '.data.amount' -r"
@@ -93,25 +97,25 @@ cryptoPrice pair = "curl 'https://api.coinbase.com/v2/prices/"++pair++"/spot?cur
 hddTmp :: [Char] -> [Char]
 hddTmp hddName = hddName ++" <free>/<size> <usedbar> |"
 
-stationaryCmds :: AConfig -> [Runnable]
-stationaryCmds cnf = 
-  [ Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "gputemp" 50
-  , Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
-  , Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
-  , Run $ DiskU [("/mnt/fastdisk", hddTmp "fastdisk"), ("/", hddTmp "root"), ("/boot", hddTmp "boot"), ("/mnt/bigdisk", hddTmp "bigdisk")] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
-  ]
-
 alsaLol = "<action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action>"
 
-laptopTmpl :: [Char]
-laptopTmpl =
+hanstopCmds cnf = [unsafeStdinReader, alsa cnf, dynnetwork cnf, battery cnf, memory cnf, multicpu cnf, multicoretemp cnf, date]
+hanstopTmpl :: [Char]
+hanstopTmpl =
   "%UnsafeStdinReader%}\
   \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
+nimbusCmds cnf = [unsafeStdinReader, alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date]
+nimbusTpl :: [Char]
+nimbusTpl =
+  "%UnsafeStdinReader%}\
+  \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xf7e8 %nvidiaTemp%°C | \xfb19 %multicpu% %coretemp%| %date%"
+
+stationaryCmds cnf = [unsafeStdinReader, disku, ethprice, btcprice, enzv, alsa cnf, dynnetwork cnf, nvidiaTemp, memory cnf, multicpu cnf, multicoretemp cnf, date]
 stationaryTmpl :: [Char]
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
-  \{%disku% ETH %ethprice% | BTC %btcprice% | %ENZV% | " ++ alsaLol ++ " | ﯱ %dynnetwork% | \xf7e8 %gputemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
+  \{%disku% ETH %ethprice% | BTC %btcprice% | %ENZV% | " ++ alsaLol ++ " | ﯱ %dynnetwork% | \xf7e8 %nvidiaTemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
 
 config :: AConfig -> Config
 config cnf =
@@ -138,10 +142,16 @@ config cnf =
          , iconRoot = ""
          , allDesktops = True
          , overrideRedirect = True
-         , commands = cmds cnf ++ ifLaptop cnf
-            (laptopCmds cnf)
-            (stationaryCmds cnf)
+         , commands = hstNmCond cnf HstNm
+           { hst_hogwarts = stationaryCmds cnf
+           , hst_hanstop = hanstopCmds cnf
+           , hst_nimbus2k = nimbusCmds cnf
+           }
          , sepChar = "%"
          , alignSep = "}{"
-         , template = ifLaptop cnf laptopTmpl stationaryTmpl
+         , template = hstNmCond cnf HstNm
+           { hst_hogwarts = stationaryTmpl
+           , hst_hanstop = hanstopTmpl
+           , hst_nimbus2k = nimbusTpl
+           }
          }

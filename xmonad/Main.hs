@@ -139,8 +139,21 @@ passCmds cfg =
     , ("GenerateExistingNoSymbols", passGeneratePrompt "--in-place -n" (myXPConfig cfg))
     ]
 
-cmdBrightness :: String -> String
-cmdBrightness arg = "brightnessctl set " ++ arg
+cmdBrightness :: AConfig -> String -> String
+cmdBrightness cfg@AConfig{cl_hostName="hanstop"} arg = "brightnessctl set " ++ brightnessArg arg cfg
+cmdBrightness cfg@AConfig{cl_hostName="nimbus2k"} arg = "xbacklight " ++ brightnessArg arg cfg
+cmdBrightness _ arg = "echo " ++ arg
+
+brightnessArg "up" AConfig{cl_hostName="hanstop"} = "+5%"
+brightnessArg "fullUp" AConfig{cl_hostName="hanstop"} = "100%"
+brightnessArg "down" AConfig{cl_hostName="hanstop"} = "5%-"
+brightnessArg "fullDown" AConfig{cl_hostName="hanstop"} = "1"
+
+brightnessArg "up" AConfig{cl_hostName="nimbus2k"} = "-inc 5%"
+brightnessArg "fullUp" AConfig{cl_hostName="nimbus2k"} = "-set 100%"
+brightnessArg "down" AConfig{cl_hostName="nimbus2k"} = "-dec 5%"
+brightnessArg "fullDown" AConfig{cl_hostName="nimbus2k"} = "-set 0%"
+
 cmdSetVolume :: String -> String
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
 cmdMaimSelect :: String -> String
@@ -157,10 +170,10 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
     , ((0,            xK_XF86AudioRaiseVolume ), spawn $ cmdSetVolume "+5%")
     , ((0,            xK_XF86AudioLowerVolume ), spawn $ cmdSetVolume "-5%")
-    , ((0,            xK_XF86MonBrightnessDown), spawn $ cmdBrightness "5%-")
-    , ((modm,         xK_XF86MonBrightnessDown), spawn $ cmdBrightness "1")
-    , ((0,            xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness "+5%")
-    , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness "100%")
+    , ((0,            xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg "down")
+    , ((modm,         xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg "fullDown")
+    , ((0,            xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg "up")
+    , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg "fullUp")
     , ((0,            xK_Print                ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
 
     , ((modm,         xK_grave                ), gsActionRunner (passCmds cfg) cfg)

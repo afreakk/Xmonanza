@@ -38,21 +38,24 @@ myTabConfig cfg = def
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout cfg = gaps $ smartBorders $ MD.avoidStruts $ BRNG.boringWindows $ dynamicTiledSubTabbed ||| tabbed
+myLayout cfg = gaps $ smartBorders $ MD.avoidStruts $ BRNG.boringWindows $ wrappedHogwartsTiled ||| wrappedTiled ||| tabbed
   where
     gaps                  = spacingRaw False (Border 0 0 0 0) False (Border 10 0 5 5) True 
     tabcfg                = myTabConfig cfg
     tabbed                = tabbedBottom shrinkText tabcfg
 
-    dynamicTiledSubTabbed = configurableNavigation noNavigateBorders $ subTabbedBottom tabcfg dynamicTiled
-    dynamicTiled          = BooleanLayout isHogwarts hogwartsTiled tiled
+    wrappedHogwartsTiled         = configurableNavigation noNavigateBorders $ subTabbedBottom tabcfg hogwartsTiled
+    wrappedTiled                 = configurableNavigation noNavigateBorders $ subTabbedBottom tabcfg tiled
+
+    -- dynamicTiledSubTabbed = configurableNavigation noNavigateBorders $ subTabbedBottom tabcfg dynamicTiled
+    --dynamicTiled          = BooleanLayout isHogwarts hogwartsTiled tiled
     hogwartsTiled         = reflectHoriz $ reflectVert $ Mirror tiled
     tiled                 = ResizableTall nmaster delta ratio []
 
     -- The default number of windows in the master pane
     nmaster = 1
     -- Default proportion of screen occupied by master pane
-    ratio   = toRational ((2/(1 + sqrt 5 :: Double)) + (fromIntegral (cl_barHeight cfg)) / 2160)
+    ratio   = toRational ((2/(1 + sqrt 5 :: Double)) + fromIntegral (cl_barHeight cfg) / 2160)
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
     subTabbedBottom tabcfg parentLayout = addTabsBottom shrinkText tabcfg $ subLayout [] Simplest parentLayout
