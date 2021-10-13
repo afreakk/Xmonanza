@@ -59,4 +59,4 @@ myLayout cfg = gaps $ smartBorders $ MD.avoidStruts $ BRNG.boringWindows $ wrapp
     -- Percent of screen to increment by when resizing panes
     delta   = 3/100
     subTabbedBottom tabcfg parentLayout = addTabsBottom shrinkText tabcfg $ subLayout [] Simplest parentLayout
-    isHogwarts = cl_hostName cfg == "hogwarts"
+    -- isHogwarts = cl_hostName cfg == "hogwarts"

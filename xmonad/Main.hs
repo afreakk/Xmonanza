@@ -1,4 +1,4 @@
-import AConfig (getConfig, AConfig (..), ifLaptop)
+import AConfig (getConfig, AConfig (..), HstNm (HstNm), hstNmCond)
 import System.Exit
 import XMonad as XM
 import XMonad.Actions.CopyWindow
@@ -139,20 +139,15 @@ passCmds cfg =
     , ("GenerateExistingNoSymbols", passGeneratePrompt "--in-place -n" (myXPConfig cfg))
     ]
 
-cmdBrightness :: AConfig -> String -> String
-cmdBrightness cfg@AConfig{cl_hostName="hanstop"} arg = "brightnessctl set " ++ brightnessArg arg cfg
-cmdBrightness cfg@AConfig{cl_hostName="nimbus2k"} arg = "xbacklight " ++ brightnessArg arg cfg
-cmdBrightness _ arg = "echo " ++ arg
+data BrightnessCmd = Up | FullUp | Down | FullDown
+cmdBrightness :: AConfig -> BrightnessCmd -> String
+cmdBrightness cfg arg = hstNmCond cfg (HstNm "" "brightnessctl set " "xbacklight " "") ++ brightnessArg arg cfg
 
-brightnessArg "up" AConfig{cl_hostName="hanstop"} = "+5%"
-brightnessArg "fullUp" AConfig{cl_hostName="hanstop"} = "100%"
-brightnessArg "down" AConfig{cl_hostName="hanstop"} = "5%-"
-brightnessArg "fullDown" AConfig{cl_hostName="hanstop"} = "1"
-
-brightnessArg "up" AConfig{cl_hostName="nimbus2k"} = "-inc 5%"
-brightnessArg "fullUp" AConfig{cl_hostName="nimbus2k"} = "-set 100%"
-brightnessArg "down" AConfig{cl_hostName="nimbus2k"} = "-dec 5%"
-brightnessArg "fullDown" AConfig{cl_hostName="nimbus2k"} = "-set 0%"
+brightnessArg :: BrightnessCmd -> AConfig -> String
+brightnessArg Up cfg       = hstNmCond cfg (HstNm "" "+5%"  "-inc 5%" "")
+brightnessArg FullUp cfg   = hstNmCond cfg (HstNm "" "100%" "-set 100%" "")
+brightnessArg Down cfg     = hstNmCond cfg (HstNm "" "5%-"  "-dec 5%" "")
+brightnessArg FullDown cfg = hstNmCond cfg (HstNm "" "1"    "-set 0%" "")
 
 cmdSetVolume :: String -> String
 cmdSetVolume arg = "~/bin/setSinkVolumeDefault.sh " ++ arg
@@ -170,10 +165,10 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
     , ((0,            xK_XF86AudioRaiseVolume ), spawn $ cmdSetVolume "+5%")
     , ((0,            xK_XF86AudioLowerVolume ), spawn $ cmdSetVolume "-5%")
-    , ((0,            xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg "down")
-    , ((modm,         xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg "fullDown")
-    , ((0,            xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg "up")
-    , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg "fullUp")
+    , ((0,            xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg Down)
+    , ((modm,         xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg FullDown)
+    , ((0,            xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg Up)
+    , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg FullUp)
     , ((0,            xK_Print                ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
 
     , ((modm,         xK_grave                ), gsActionRunner (passCmds cfg) cfg)
@@ -326,6 +321,7 @@ myManageHook = composeAll
         where unfloat = ask >>= doF . W.sink
 
 
+fgXmobarColor :: String -> String -> String
 fgXmobarColor color = xmobarColor color ""
 ------------------------------------------------------------------------
 -- Status bars and logging
@@ -336,7 +332,7 @@ myLogHook :: GHC.IO.Handle.Types.Handle -> AConfig -> X ()
 myLogHook xmproc cfg = do
   workspaceHistoryHook
   workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten (ifLaptop cfg 42 100)
+    { ppOutput  = hPutStrLn xmproc . xmobarShorten 100
     , ppCurrent = fgXmobarColor (cl_lilly cfg) . formatWs
     , ppHidden  = formatWs
     , ppTitle   = fgXmobarColor (cl_lilly cfg)

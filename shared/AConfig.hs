@@ -1,25 +1,29 @@
-module AConfig (getConfig, AConfig(..), ifLaptop, HstNm(..), hstNmCond) where
-import Network.HostName
+module AConfig (getConfig, AConfig(..), HstNm(..), hstNmCond) where
+import Network.HostName hiding (HostName)
 import SimpleCmd
 import Data.List
 import Text.Read
 import Data.Maybe
 
-ifLaptop AConfig{cl_hostName="hanstop"} thn _ = thn
-ifLaptop AConfig{cl_hostName="nimbus2k"} thn _ = thn
-ifLaptop _ _ els = els
+data HostName = Hanstop | Nimbus2k | Hogwarts | Other deriving (Show)
 
 hstNmCond :: AConfig -> HstNm a -> a
-hstNmCond AConfig{cl_hostName="hanstop"} x = hst_hanstop x
-hstNmCond AConfig{cl_hostName="hogwarts"} x = hst_hogwarts x
-hstNmCond AConfig{cl_hostName="nimbus2k"} x = hst_nimbus2k x
-hstNmCond _ x = hst_hogwarts x
+hstNmCond AConfig{cl_hostName=Hanstop} x = hst_hanstop x
+hstNmCond AConfig{cl_hostName=Hogwarts} x = hst_hogwarts x
+hstNmCond AConfig{cl_hostName=Nimbus2k} x = hst_nimbus2k x
+hstNmCond _ x = hst_other x
 
 data HstNm a = HstNm
   { hst_hogwarts :: a
   , hst_hanstop :: a
   , hst_nimbus2k :: a
+  , hst_other :: a
   }
+
+stringToHostName "hanstop" = Hanstop
+stringToHostName "hogwarts" = Hogwarts
+stringToHostName "nimbus2k" = Nimbus2k
+stringToHostName _ = Other
 
 data AConfig = AConfig
   { cl_bg :: String
@@ -32,7 +36,7 @@ data AConfig = AConfig
   , cl_font :: String
   , cl_font_big :: String
   , cl_barHeight :: Int
-  , cl_hostName :: String
+  , cl_hostName :: HostName
   , cl_gsCellWidth :: Integer
   , cl_gsCellWidthBig :: Integer
   , cl_gsCellHeightBig :: Integer
@@ -48,7 +52,7 @@ sndOfThing x = "200"
 
 getConfig :: IO AConfig
 getConfig = do
-  hostName <- getHostName 
+  hostName <- fmap stringToHostName getHostName
   --xrdbQStr <- cmd "xrdb" ["-query"] 
   --let xrdbQStr = fromStdout xrdbOut
  -- let lined = lines  xrdbQStr
@@ -65,7 +69,7 @@ getConfig = do
           , cl_aqua  = "#689d6a"
           , cl_lilly = "#b16286"
           , cl_fg0   = ifIsLightTheme "#282828" "#fbf1c7"
-          , cl_font  = "xft:Hack Nerd Font:size=15:Regular:antialias=true"
+          , cl_font  = "xft:Hack Nerd Font:size=12:Regular:antialias=true"
           , cl_font_big  = "xft:Hack Nerd Font:size=30:Regular:antialias=true"
           , cl_barHeight= 25
           , cl_hostName=hostName
@@ -79,5 +83,3 @@ getConfig = do
           ifIsLightTheme lightValue darkValue = case hostName of
             -- "hanstop" -> lightValue
             _         -> darkValue
-          ifIsLaptop laptopValue elseValue =
-            if hostName == "hanstop" || hostName == "nimbus2k" then laptopValue else elseValue

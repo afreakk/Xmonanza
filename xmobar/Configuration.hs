@@ -1,6 +1,7 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Configuration (config) where
 import Xmobar hiding (date)
-import AConfig (ifLaptop, AConfig (..), HstNm(..), hstNmCond)
+import AConfig (AConfig (..), HstNm(..), hstNmCond)
 
 dynnetwork cnf = Run $ DynNetwork
     ["-L", "0",
@@ -88,8 +89,9 @@ battery cnf = Run $ BatteryP ["BAT0"]
 nvidiaTemp = Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "nvidiaTemp" 50
 btcprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
 ethprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
-disku = Run $ DiskU [("/mnt/fastdisk", hddTmp "fastdisk"), ("/", hddTmp "root"), ("/boot", hddTmp "boot"), ("/mnt/bigdisk", hddTmp "bigdisk")] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
+hogwartsDisku = Run $ DiskU [("/mnt/fastdisk", hddTmp "fastdisk"), ("/", hddTmp "root"), ("/boot", hddTmp "boot"), ("/mnt/bigdisk", hddTmp "bigdisk")] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
 coretemp = Run $ CoreTemp ["-t", "<core0>|<core1>C", "-L", "40", "-H", "60", "-l", "lightblue", "-n", "gray90", "-h", "red"] 50
+nimbusDisku = Run $ DiskU [("/", hddTmp "root"), ("/boot", hddTmp "boot")] ["-L", "20", "-H", "50", "-m", "1", "-p", "3", "-f","▰", "-b","▱", "-W","6"] 100
 
 cryptoPrice :: [Char] -> [Char]
 cryptoPrice pair = "curl 'https://api.coinbase.com/v2/prices/"++pair++"/spot?currency=USD' -s | jq '.data.amount' -r"
@@ -105,13 +107,13 @@ hanstopTmpl =
   "%UnsafeStdinReader%}\
   \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
-nimbusCmds cnf = [unsafeStdinReader, alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date]
+nimbusCmds cnf = [unsafeStdinReader, btcprice, ethprice, nimbusDisku ,alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date]
 nimbusTpl :: [Char]
 nimbusTpl =
   "%UnsafeStdinReader%}\
-  \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xf7e8 %nvidiaTemp%°C | \xfb19 %multicpu% %coretemp%| %date%"
+  \{" ++ alsaLol ++ " | %disku% ETH %ethprice% | BTC %btcprice% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xf7e8 %nvidiaTemp%°C | \xfb19 %multicpu% %coretemp%| %date%"
 
-stationaryCmds cnf = [unsafeStdinReader, disku, ethprice, btcprice, enzv, alsa cnf, dynnetwork cnf, nvidiaTemp, memory cnf, multicpu cnf, multicoretemp cnf, date]
+stationaryCmds cnf = [unsafeStdinReader, hogwartsDisku, ethprice, btcprice, enzv, alsa cnf, dynnetwork cnf, nvidiaTemp, memory cnf, multicpu cnf, multicoretemp cnf, date]
 stationaryTmpl :: [Char]
 stationaryTmpl = 
   "%UnsafeStdinReader%}\
@@ -146,6 +148,7 @@ config cnf =
            { hst_hogwarts = stationaryCmds cnf
            , hst_hanstop = hanstopCmds cnf
            , hst_nimbus2k = nimbusCmds cnf
+           , hst_other  = nimbusCmds cnf
            }
          , sepChar = "%"
          , alignSep = "}{"
@@ -153,5 +156,6 @@ config cnf =
            { hst_hogwarts = stationaryTmpl
            , hst_hanstop = hanstopTmpl
            , hst_nimbus2k = nimbusTpl
+           , hst_other  = nimbusTpl
            }
          }
