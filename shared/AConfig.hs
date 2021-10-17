@@ -36,6 +36,8 @@ data AConfig = AConfig
   , cl_font :: String
   , cl_font_big :: String
   , cl_barHeight :: Int
+  , cl_tabHeight :: Int
+  , cl_xpHeight :: Int
   , cl_hostName :: HostName
   , cl_gsCellWidth :: Integer
   , cl_gsCellWidthBig :: Integer
@@ -71,7 +73,9 @@ getConfig = do
           , cl_fg0   = ifIsLightTheme "#282828" "#fbf1c7"
           , cl_font  = "xft:Hack Nerd Font:size=12:Regular:antialias=true"
           , cl_font_big  = "xft:Hack Nerd Font:size=30:Regular:antialias=true"
-          , cl_barHeight= 25
+          , cl_barHeight= 20 -- not sure, but doesnt seem to affect bar for now..
+          , cl_xpHeight= 25
+          , cl_tabHeight= 26
           , cl_hostName=hostName
           , cl_gsCellWidth = 400
           , cl_gsCellWidthBig = 500

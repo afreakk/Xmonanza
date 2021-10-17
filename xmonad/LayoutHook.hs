@@ -25,7 +25,7 @@ myTabConfig cfg = def
   , urgentColor = cl_aqua cfg 
   , urgentBorderColor = cl_lilly cfg 
   , fontName = cl_font cfg
-  , decoHeight = fromIntegral $ cl_barHeight cfg
+  , decoHeight = fromIntegral $ cl_tabHeight cfg
   }
 
 ------------------------------------------------------------------------
