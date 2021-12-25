@@ -378,13 +378,14 @@ mouseHelpActions = [
 -- per-workspace layout choices.
 --
 -- By default, do nothing.
-myStartupHook :: AConfig -> X ()
-myStartupHook = gsWithWindows mouseHelpActions
+-- myStartupHook :: AConfig -> X ()
+-- myStartupHook = gsWithWindows mouseHelpActions
 
-screenCornerStuff c = c { handleEventHook = handleEventHook c <+> screenCornerEventHook
-                        , startupHook     = addScreenCorner SCUpperRight $ startupHook c
-                        , layoutHook      = screenCornerLayoutHook $ layoutHook c
-                        }
+screenCornerStuff c = c 
+                        -- { handleEventHook = handleEventHook c <+> screenCornerEventHook
+                        -- , startupHook     = addScreenCorner SCUpperRight $ startupHook c
+                        -- , layoutHook      = screenCornerLayoutHook $ layoutHook c
+                        -- }
 
 ewmhAndFullScreen :: XConfig l -> XConfig l
 ewmhAndFullScreen c = ewmh $ c { handleEventHook = handleEventHook c <+> fullscreenEventHook }
@@ -419,7 +420,7 @@ defaults xmobarproc cfg = def {
         layoutHook         = myLayout cfg,
         manageHook         = myManageHook,
         -- handleEventHook    = myEventHook,
-        logHook            = myLogHook xmobarproc cfg,
-        startupHook        = myStartupHook cfg
+        logHook            = myLogHook xmobarproc cfg
+        -- startupHook        = myStartupHook cfg
     }
 
