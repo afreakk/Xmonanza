@@ -86,6 +86,7 @@ battery cnf = Run $ BatteryP ["BAT0"]
      "-A", "3"]
     50
 
+trayerPadding = Run $ Com "/bin/sh" ["-c", "yes ' ' | tr -d '\\n' | head -c $((`xdotool search --onlyvisible --class 'Trayer' getwindowgeometry| sed -n 's/^\\s*Geometry: \\([0-9]\\+\\)x.*$/\\1/p'`/10))"] "trayerPadding" 50
 nvidiaTemp = Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "nvidiaTemp" 50
 btcprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
 ethprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
@@ -107,11 +108,11 @@ hanstopTmpl =
   "%UnsafeStdinReader%}\
   \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
-nimbusCmds cnf = [unsafeStdinReader, btcprice, ethprice, nimbusDisku ,alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date]
+nimbusCmds cnf = [unsafeStdinReader, btcprice, ethprice, nimbusDisku ,alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date, trayerPadding]
 nimbusTpl :: [Char]
 nimbusTpl =
   "%UnsafeStdinReader%}\
-  \{" ++ alsaLol ++ " | %disku% ETH %ethprice% | BTC %btcprice% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xf7e8 %nvidiaTemp%°C | \xfb19 %multicpu% %coretemp%| %date%"
+  \{" ++ alsaLol ++ " | %disku% ETH %ethprice% | BTC %btcprice% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xf7e8 %nvidiaTemp%°C | \xfb19 %multicpu% %coretemp%| %date% %trayerPadding%"
 
 stationaryCmds cnf = [unsafeStdinReader, hogwartsDisku, ethprice, btcprice, enzv, alsa cnf, dynnetwork cnf, nvidiaTemp, memory cnf, multicpu cnf, multicoretemp cnf, date]
 stationaryTmpl :: [Char]
@@ -134,7 +135,7 @@ config cnf =
          , fgColor = cl_fg0 cnf
          , alpha = 150
          -- , position = Top
-         , position = TopSize L 98 (cl_barHeight cnf)
+         , position = TopSize L 100 (cl_barHeight cnf)
          , textOffset = -1
          , iconOffset = -1
          , lowerOnStart = True

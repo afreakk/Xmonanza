@@ -25,6 +25,7 @@ import XmobarUtils (xmobarShorten)
 import XMonad.Prompt.FuzzyMatch
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
+import qualified XMonad.Util.Hacks as Hacks
 
 import BackAndForth (backAndForth)
 import Calculator (calculatorPrompt)
@@ -419,6 +420,7 @@ defaults xmobarproc cfg = def {
         mouseBindings      = myMouseBindings,
         layoutHook         = myLayout cfg,
         manageHook         = myManageHook,
+        handleEventHook    = Hacks.trayerAboveXmobarEventHook,
         -- handleEventHook    = myEventHook,
         logHook            = myLogHook xmobarproc cfg
         -- startupHook        = myStartupHook cfg
