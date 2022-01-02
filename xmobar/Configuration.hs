@@ -71,7 +71,7 @@ enzv = Run $ WeatherX "ENZV"
     , ("mostly cloudy", "\xe37e")
     , ("considerable cloudiness", "\xfa8f")]
   ["-t", "<skyConditionS> <tempC>° <windMs>m/s <windCardinal> <windAzimuth> <pressure>"] 600
-unsafeStdinReader  = Run UnsafeStdinReader
+xmonadlog  = Run UnsafeXMonadLog
 battery cnf = Run $ BatteryP ["BAT0"]
     ["-t", "<leftipat>",
      "-L", "10", "-H", "80", "-p", "3",
@@ -102,22 +102,22 @@ hddTmp hddName = hddName ++" <free>/<size> <usedbar> |"
 
 alsaLol = "<action=`setSinkVolumeDefault.sh +1db` button=4><action=`setSinkVolumeDefault.sh -1db` button=5>%alsa:default:Master%</action></action>"
 
-hanstopCmds cnf = [unsafeStdinReader, alsa cnf, dynnetwork cnf, battery cnf, memory cnf, multicpu cnf, multicoretemp cnf, date]
+hanstopCmds cnf = [xmonadlog, alsa cnf, dynnetwork cnf, battery cnf, memory cnf, multicpu cnf, multicoretemp cnf, date]
 hanstopTmpl :: [Char]
 hanstopTmpl =
-  "%UnsafeStdinReader%}\
+  "%UnsafeXMonadLog%}\
   \{" ++ alsaLol ++ " | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | %date%"
 
-nimbusCmds cnf = [unsafeStdinReader, btcprice, ethprice, nimbusDisku ,alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date, trayerPadding]
+nimbusCmds cnf = [xmonadlog, btcprice, ethprice, nimbusDisku ,alsa cnf, dynnetwork cnf, battery cnf, memory cnf, nvidiaTemp, multicpu cnf, coretemp, date, trayerPadding]
 nimbusTpl :: [Char]
 nimbusTpl =
-  "%UnsafeStdinReader%}\
+  "%UnsafeXMonadLog%}\
   \{" ++ alsaLol ++ " | %disku% ETH %ethprice% | BTC %btcprice% | ﯱ %dynnetwork% | %battery% | \xf85a %memory% | \xf7e8 %nvidiaTemp%°C | \xfb19 %multicpu% %coretemp%| %date% %trayerPadding%"
 
-stationaryCmds cnf = [unsafeStdinReader, hogwartsDisku, ethprice, btcprice, enzv, alsa cnf, dynnetwork cnf, nvidiaTemp, memory cnf, multicpu cnf, multicoretemp cnf, date]
+stationaryCmds cnf = [xmonadlog, hogwartsDisku, ethprice, btcprice, enzv, alsa cnf, dynnetwork cnf, nvidiaTemp, memory cnf, multicpu cnf, multicoretemp cnf, date]
 stationaryTmpl :: [Char]
 stationaryTmpl = 
-  "%UnsafeStdinReader%}\
+  "%UnsafeXMonadLog%}\
   \{%disku% ETH %ethprice% | BTC %btcprice% | %ENZV% | " ++ alsaLol ++ " | ﯱ %dynnetwork% | \xf7e8 %nvidiaTemp%°C | \xf85a %memory% | \xfb19 %multicpu% %multicoretemp% | <action=`~/bin/runner.sh` button=1>%date%</action>"
 
 config :: AConfig -> Config

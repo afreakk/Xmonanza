@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 import AConfig (getConfig, AConfig (..), HstNm (HstNm), hstNmCond)
 import System.Exit
 import XMonad as XM
@@ -6,8 +7,7 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.Promote
 import XMonad.Actions.Submap
 import XMonad.Actions.WorkspaceNames
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.FloatNext
+import qualified XMonad.Hooks.FloatNext as FN
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Hooks.RefocusLast
 -- import XMonad.Hooks.ScreenCorners
@@ -18,14 +18,14 @@ import XMonad.Layout.ResizableTile
 import XMonad.Layout.SubLayouts
 import XMonad.Prompt
 import XMonad.Prompt.Man
-import XMonad.Util.Run (runInTerm, hPutStrLn, spawnPipe)
 import XMonad.Actions.FloatKeys
 import qualified XMonad.Util.ExtensibleState as XS
-import XmobarUtils (xmobarShorten)
 import XMonad.Prompt.FuzzyMatch
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 import qualified XMonad.Util.Hacks as Hacks
+import qualified XMonad.Hooks.StatusBar as SB
+import qualified XMonad.Hooks.StatusBar.PP as SBPP
 
 import BackAndForth (backAndForth)
 import Calculator (calculatorPrompt)
@@ -36,8 +36,8 @@ import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
 import PassFork
 import Utils (floatingTermClass, alacrittyFloatingOpt)
-import qualified GHC.IO.Handle as GHC.IO.Handle.Types
 import XMonad.Layout.LayoutModifier
+import qualified XMonad.Util.Run as XUR
 
 newtype ModeName
  = ModeName {getModeName :: Maybe String}
@@ -110,8 +110,8 @@ myCmds cfg conf =
 
 optypeCmds :: AConfig -> [([Char], X ())]
 optypeCmds _ =
-    [ ("ClipUsername"             , runInTerm alacrittyFloatingOpt "optype -c -u")
-    , ("ClipPassword"             , runInTerm alacrittyFloatingOpt "optype -c -p")
+    [ ("ClipUsername"             , XUR.runInTerm alacrittyFloatingOpt "optype -c -u")
+    , ("ClipPassword"             , XUR.runInTerm alacrittyFloatingOpt "optype -c -p")
 
     , ("Autofill"                 , spawn "optype")
     , ("TypePassword"             , spawn "optype -p")
@@ -235,7 +235,7 @@ myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     , ((modm,               xK_b        ), sendMessage MD.ToggleStruts)
     , ((modm,               xK_j        ), spawn "~/bin/setxkbscript")
     , ((modm,               xK_y        ), spawn "~/bin/terminal.sh")
-    , ((modm .|. shiftMask, xK_y        ), toggleFloatAllNew >> runLogHook)
+    , ((modm .|. shiftMask, xK_y        ), FN.toggleFloatAllNew >> FN.runLogHook)
     , ((modm,               xK_h        ), sendMessage Shrink)
     , ((modm .|. shiftMask, xK_h        ), sendMessage MirrorShrink)
     , ((modm,               xK_n        ), BRNG.focusDown)
@@ -317,45 +317,14 @@ myManageHook = composeAll
     , className =? "TeamViewer"  --> unfloat
     , className =? floatingTermClass --> doFloat
     ]
-    <+> floatNextHook
+    <+> FN.floatNextHook
     <+> namedScratchpadManageHook scratchpads
         where unfloat = ask >>= doF . W.sink
 
 
-fgXmobarColor :: String -> String -> String
-fgXmobarColor color = xmobarColor color ""
-------------------------------------------------------------------------
--- Status bars and logging
--- Perform an arbitrary action on each internal state change or X event.
--- See the 'XMonad.Hooks.DynamicLog' extension for examples.
---
-myLogHook :: GHC.IO.Handle.Types.Handle -> AConfig -> X ()
-myLogHook xmproc cfg = do
-  workspaceHistoryHook
-  workspaceNamesPP def
-    { ppOutput  = hPutStrLn xmproc . xmobarShorten 100
-    , ppCurrent = fgXmobarColor (cl_lilly cfg) . formatWs
-    , ppHidden  = formatWs
-    , ppTitle   = fgXmobarColor (cl_lilly cfg)
-    , ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . xmobarStrip
-    , ppUrgent  = fgXmobarColor (cl_aqua  cfg) . formatWs
-    , ppOrder   = toOrdr
-    , ppSep     = " | "
-    , ppVisible = fgXmobarColor (cl_green cfg)
-    , ppExtras = [willFloatAllNewPP (fgXmobarColor (cl_red cfg) . ("FloatNext: " ++)), fmap (fgXmobarColor (cl_aqua cfg)) . getModeName <$> (XS.get :: X ModeName)]
-    } >>= dynamicLogWithPP
-  where
-    toOrdr (wsNames:_layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
-    toOrdr (wsNames:_layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
-    toOrdr _ = ["wtf something weird"]
-    xmobarTitleAllowedChars = [' '..'~']
-    -- hide NSP ws rest of ws make clickable with xdotool
-    formatWs "NSP"  = ""
-    formatWs wsName = xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
-      where wsIdx = takeWhile (/=':') $ xmobarStrip wsName
 
 scrollableWsNames :: String -> String
-scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
+scrollableWsNames wsNames = SBPP.xmobarAction "xdotool key Super_L+Shift+Tab" "5" (SBPP.xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
 -- mouseHelpActions :: [(String, X ())]
 -- mouseHelpActions = [
@@ -388,12 +357,34 @@ scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xm
                         -- , layoutHook      = screenCornerLayoutHook $ layoutHook c
                         -- }
 
+mySB :: AConfig -> SB.StatusBarConfig
+mySB cfg = SB.statusBarProp "~/.local/bin/xmobar-afreak" (pure def
+    { SBPP.ppCurrent = fgXmobarColor (cl_lilly cfg) . formatWs
+    , SBPP.ppHidden  = formatWs
+    , SBPP.ppTitle   = fgXmobarColor (cl_lilly cfg)
+    , SBPP.ppTitleSanitize = Prelude.filter (`elem` xmobarTitleAllowedChars) . SBPP.xmobarStrip
+    , SBPP.ppUrgent  = fgXmobarColor (cl_aqua  cfg) . formatWs
+    , SBPP.ppOrder   = toOrdr
+    , SBPP.ppSep     = " | "
+    , SBPP.ppVisible = fgXmobarColor (cl_green cfg)
+    , SBPP.ppExtras = [FN.willFloatAllNewPP (fgXmobarColor (cl_red cfg) . ("FloatNext: " ++)), fmap (fgXmobarColor (cl_aqua cfg)) . getModeName <$> (XS.get :: X ModeName)]
+    })
+  where
+    fgXmobarColor color = SBPP.xmobarColor color ""
+    toOrdr (wsNames:_layoutName:windowTitle:xtras:_) = [scrollableWsNames wsNames,xtras,windowTitle]
+    toOrdr (wsNames:_layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
+    toOrdr _ = ["wtf something weird"]
+    xmobarTitleAllowedChars = [' '..'~']
+    -- hide NSP ws rest of ws make clickable with xdotool
+    formatWs "NSP"  = ""
+    formatWs wsName = SBPP.xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
+      where wsIdx = takeWhile (/=':') $ SBPP.xmobarStrip wsName
 
 main :: IO ()
 main = do
-  xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
+  -- xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
-  xmonad . EWMH.ewmhFullscreen . applyRefocusLastHooks . withUrgencyHook NoUrgencyHook . MD.docks $ defaults xmobarproc cfg
+  xmonad . SB.withSB (mySB cfg) . EWMH.ewmhFullscreen . applyRefocusLastHooks . withUrgencyHook NoUrgencyHook . MD.docks $ defaults cfg
 
 applyRefocusLastHooks :: XConfig l -> XConfig (ModifiedLayout RefocusLastLayoutHook l)
 applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> refocusLastWhen isFloat
@@ -405,7 +396,7 @@ applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> refocusLas
 -- fields in the default config. Any you don't override, will
 -- use the defaults defined in xmonad/XMonad/Config.hs
 --
-defaults xmobarproc cfg = def {
+defaults cfg = def {
         terminal           = "alacritty",
         focusFollowsMouse  = False,
         clickJustFocuses   = False,
@@ -420,7 +411,7 @@ defaults xmobarproc cfg = def {
         manageHook         = myManageHook,
         handleEventHook    = Hacks.trayerAboveXmobarEventHook,
         -- handleEventHook    = myEventHook,
-        logHook            = myLogHook xmobarproc cfg
+        logHook            = workspaceHistoryHook
         -- startupHook        = myStartupHook cfg
     }
 
