@@ -10,7 +10,7 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.FloatNext
 import XMonad.Hooks.ManageDocks as MD
 import XMonad.Hooks.RefocusLast
-import XMonad.Hooks.ScreenCorners
+-- import XMonad.Hooks.ScreenCorners
 import XMonad.Hooks.UrgencyHook
 import XMonad.Hooks.WorkspaceHistory (workspaceHistoryHook)
 import XMonad.Layout.BoringWindows as BRNG
@@ -29,9 +29,9 @@ import qualified XMonad.Util.Hacks as Hacks
 
 import BackAndForth (backAndForth)
 import Calculator (calculatorPrompt)
-import EwmhDesktopsPromote
+import qualified XMonad.Hooks.EwmhDesktops as EWMH
 import ExtraKeyCodes
-import GridSelects (gsWithWindows, gsWindowGoto, gsActionRunner)
+import GridSelects ({- gsWithWindows, -} gsWindowGoto, gsActionRunner)
 import LayoutHook (myLayout)
 import NamedScratchpadRefocusLast
 import PassFork
@@ -109,7 +109,7 @@ myCmds cfg conf =
     ]
 
 optypeCmds :: AConfig -> [([Char], X ())]
-optypeCmds cfg =
+optypeCmds _ =
     [ ("ClipUsername"             , runInTerm alacrittyFloatingOpt "optype -c -u")
     , ("ClipPassword"             , runInTerm alacrittyFloatingOpt "optype -c -p")
 
@@ -357,20 +357,20 @@ myLogHook xmproc cfg = do
 scrollableWsNames :: String -> String
 scrollableWsNames wsNames = xmobarAction "xdotool key Super_L+Shift+Tab" "5" (xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
-mouseHelpActions :: [(String, X ())]
-mouseHelpActions = [
-    ("Cancel menu", return ())
-  , ("Kill"      , kill1)
-  , ("Promote"    , promote)
-  , ("Next layout", sendMessage NextLayout)
-  , ("Inc Master", sendMessage $ IncMasterN (-1))
-  , ("Dec Master", sendMessage $ IncMasterN 1)
-  , ("Expand", sendMessage Expand)
-  , ("Shrink", sendMessage Shrink)
-  , ("magnify", namedScratchpadAction scratchpads "kmag")
-  , ("copyToAll", windows copyToAll)
-  , ("killAllOtherCopies", killAllOtherCopies)
-  ]
+-- mouseHelpActions :: [(String, X ())]
+-- mouseHelpActions = [
+--     ("Cancel menu", return ())
+--   , ("Kill"      , kill1)
+--   , ("Promote"    , promote)
+--   , ("Next layout", sendMessage NextLayout)
+--   , ("Inc Master", sendMessage $ IncMasterN (-1))
+--   , ("Dec Master", sendMessage $ IncMasterN 1)
+--   , ("Expand", sendMessage Expand)
+--   , ("Shrink", sendMessage Shrink)
+--   , ("magnify", namedScratchpadAction scratchpads "kmag")
+--   , ("copyToAll", windows copyToAll)
+--   , ("killAllOtherCopies", killAllOtherCopies)
+--   ]
 
 ------------------------------------------------------------------------
 -- Startup hook
@@ -382,20 +382,18 @@ mouseHelpActions = [
 -- myStartupHook :: AConfig -> X ()
 -- myStartupHook = gsWithWindows mouseHelpActions
 
-screenCornerStuff c = c 
+--screenCornerStuff c = c 
                         -- { handleEventHook = handleEventHook c <+> screenCornerEventHook
                         -- , startupHook     = addScreenCorner SCUpperRight $ startupHook c
                         -- , layoutHook      = screenCornerLayoutHook $ layoutHook c
                         -- }
 
-ewmhAndFullScreen :: XConfig l -> XConfig l
-ewmhAndFullScreen c = ewmh $ c { handleEventHook = handleEventHook c <+> fullscreenEventHook }
 
 main :: IO ()
 main = do
   xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
-  xmonad . ewmhAndFullScreen . applyRefocusLastHooks . withUrgencyHook NoUrgencyHook . MD.docks . screenCornerStuff $ defaults xmobarproc cfg
+  xmonad . EWMH.ewmhFullscreen . applyRefocusLastHooks . withUrgencyHook NoUrgencyHook . MD.docks $ defaults xmobarproc cfg
 
 applyRefocusLastHooks :: XConfig l -> XConfig (ModifiedLayout RefocusLastLayoutHook l)
 applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> refocusLastWhen isFloat
