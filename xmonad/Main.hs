@@ -38,6 +38,7 @@ import PassFork
 import Utils (floatingTermClass, alacrittyFloatingOpt)
 import XMonad.Layout.LayoutModifier
 import qualified XMonad.Util.Run as XUR
+import qualified XMonad.Actions.EasyMotion as EM
 
 newtype ModeName
  = ModeName {getModeName :: Maybe String}
@@ -158,24 +159,32 @@ cmdPipeImgToClip :: String
 cmdPipeImgToClip = " | xclip -selection clipboard -t image/png -i"
 
 
+selectWindow cfg = EM.selectWindow def 
+  { EM.sKeys = EM.AnyKeys [xK_r, xK_s, xK_t, xK_n, xK_e, xK_i]
+  , EM.bgCol = cl_bg cfg
+  , EM.borderCol = cl_orange cfg
+  , EM.txtCol = cl_fg0 cfg
+  , EM.emFont = cl_font_very_big cfg
+  } >>= (`whenJust` windows . W.focusWindow)
 ------------------------------------------------------------------------
 -- Key bindings. Add, modify or remove key bindings here.
 --
 myKeys :: AConfig -> XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
 myKeys cfg conf@XConfig {XM.modMask = modm} = M.fromList $
     [ ((modm.|.shiftMask,xK_Return), spawn $ XM.terminal conf)
-    , ((0,            xK_XF86AudioRaiseVolume ), spawn $ cmdSetVolume "+5%")
-    , ((0,            xK_XF86AudioLowerVolume ), spawn $ cmdSetVolume "-5%")
-    , ((0,            xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg Down)
-    , ((modm,         xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg FullDown)
-    , ((0,            xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg Up)
-    , ((modm,         xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg FullUp)
-    , ((0,            xK_Print                ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
+    , ((0,                  xK_XF86AudioRaiseVolume ), spawn $ cmdSetVolume "+5%")
+    , ((0,                  xK_XF86AudioLowerVolume ), spawn $ cmdSetVolume "-5%")
+    , ((0,                  xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg Down)
+    , ((modm,               xK_XF86MonBrightnessDown), spawn $ cmdBrightness cfg FullDown)
+    , ((0,                  xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg Up)
+    , ((modm,               xK_XF86MonBrightnessUp  ), spawn $ cmdBrightness cfg FullUp)
+    , ((0,                  xK_Print                ), spawn $ cmdMaimSelect "/dev/stdout" ++ cmdPipeImgToClip)
 
-    , ((modm,         xK_grave                ), gsActionRunner (passCmds cfg) cfg)
-    , ((modm,         xK_q                    ), kill1)
-    , ((modm,         xK_w                    ), spawn "~/bin/runner.sh")
-    , ((modm,         xK_f                    ), spawn "notify-send --urgency=low 'float: \n\
+    , ((modm,               xK_grave                ), gsActionRunner (passCmds cfg) cfg)
+    , ((modm,               xK_q                    ), kill1)
+    , ((modm,               xK_w                    ), spawn "~/bin/runner.sh")
+    , ((modm,               xK_f                    ), selectWindow cfg)
+    , ((modm .|. shiftMask, xK_f                    ), spawn "notify-send --urgency=low 'float: \n\
                                                        \ modm+{h,n,e,i} = resize\n\
                                                        \ modm+shift+{h,n,e,i} = resize(more)\n\
                                                        \ {h,n,e,i} = move\n\

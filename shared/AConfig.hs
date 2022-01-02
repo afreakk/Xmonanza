@@ -35,6 +35,7 @@ data AConfig = AConfig
   , cl_fg0   :: String
   , cl_font :: String
   , cl_font_big :: String
+  , cl_font_very_big :: String
   , cl_barHeight :: Int
   , cl_tabHeight :: Int
   , cl_xpHeight :: Int
@@ -51,6 +52,8 @@ headWithDefault x = head x
 
 sndOfThing [fst, snd] = snd
 sndOfThing x = "200"
+
+sizedFont size = "xft:Hack Nerd Font:size="++size++":Regular:antialias=true"
 
 getConfig :: IO AConfig
 getConfig = do
@@ -71,8 +74,9 @@ getConfig = do
           , cl_aqua  = "#689d6a"
           , cl_lilly = "#b16286"
           , cl_fg0   = ifIsLightTheme "#282828" "#fbf1c7"
-          , cl_font  = "xft:Hack Nerd Font:size=12:Regular:antialias=true"
-          , cl_font_big  = "xft:Hack Nerd Font:size=30:Regular:antialias=true"
+          , cl_font  = sizedFont "12"
+          , cl_font_big  = sizedFont "30"
+          , cl_font_very_big  = sizedFont "70"
           , cl_barHeight= 20 -- not sure, but doesnt seem to affect bar for now..
           , cl_xpHeight= 25
           , cl_tabHeight= 26
