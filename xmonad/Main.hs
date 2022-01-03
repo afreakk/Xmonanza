@@ -332,8 +332,6 @@ myManageHook = composeAll
 
 
 
-scrollableWsNames :: String -> String
-scrollableWsNames wsNames = SBPP.xmobarAction "xdotool key Super_L+Shift+Tab" "5" (SBPP.xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
 
 -- mouseHelpActions :: [(String, X ())]
 -- mouseHelpActions = [
@@ -367,7 +365,7 @@ scrollableWsNames wsNames = SBPP.xmobarAction "xdotool key Super_L+Shift+Tab" "5
                         -- }
 
 mySB :: AConfig -> SB.StatusBarConfig
-mySB cfg = SB.statusBarProp "~/.local/bin/xmobar-afreak" (pure def
+mySB cfg = SB.statusBarProp "~/.local/bin/xmobar-afreak" (workspaceNamesPP def
     { SBPP.ppCurrent = fgXmobarColor (cl_lilly cfg) . formatWs
     , SBPP.ppHidden  = formatWs
     , SBPP.ppTitle   = fgXmobarColor (cl_lilly cfg)
@@ -384,6 +382,8 @@ mySB cfg = SB.statusBarProp "~/.local/bin/xmobar-afreak" (pure def
     toOrdr (wsNames:_layoutName:windowTitle:_) = [scrollableWsNames wsNames,windowTitle]
     toOrdr _ = ["wtf something weird"]
     xmobarTitleAllowedChars = [' '..'~']
+    scrollableWsNames :: String -> String
+    scrollableWsNames wsNames = SBPP.xmobarAction "xdotool key Super_L+Shift+Tab" "5" (SBPP.xmobarAction "xdotool key Super_L+Tab" "4" wsNames)
     -- hide NSP ws rest of ws make clickable with xdotool
     formatWs "NSP"  = ""
     formatWs wsName = SBPP.xmobarAction ("xdotool key Super_L+" ++ wsIdx) "1" wsName
