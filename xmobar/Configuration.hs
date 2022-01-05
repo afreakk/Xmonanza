@@ -86,7 +86,7 @@ battery cnf = Run $ BatteryP ["BAT0"]
      "-A", "3"]
     50
 
-trayerPadding = Run $ Com "/bin/sh" ["-c", "yes ' ' | tr -d '\\n' | head -c $((`xdotool search --onlyvisible --class 'Trayer' getwindowgeometry| sed -n 's/^\\s*Geometry: \\([0-9]\\+\\)x.*$/\\1/p'`/10))"] "trayerPadding" 50
+trayerPadding = Run $ Com "/bin/sh" ["-c", "yes ' ' | tr -d '\\n' | head -c $((`xdotool search --onlyvisible --class 'Trayer' getwindowgeometry| sed -n 's/^\\s*Geometry: \\([0-9]\\+\\)x.*$/\\1/p'`/12))"] "trayerPadding" 50
 nvidiaTemp = Run $ Com "nvidia-settings" ["-t","-q","[gpu:0]/GPUCoreTemp" ] "nvidiaTemp" 50
 btcprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "BTC-USD"] "btcprice" 600
 ethprice = Run $ Com "/bin/sh" ["-c", cryptoPrice "ETH-USD"] "ethprice" 600
@@ -133,7 +133,7 @@ config cnf =
          , additionalFonts = []
          , bgColor = cl_bg cnf
          , fgColor = cl_fg0 cnf
-         , alpha = 150
+         , alpha = 200
          -- , position = Top
          , position = TopSize L 100 (cl_barHeight cnf)
          , textOffset = -1
