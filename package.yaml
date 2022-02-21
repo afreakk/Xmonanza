@@ -51,6 +51,9 @@ executables:
     main:                Main.hs
     source-dirs:         xmobar
     ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
     - -Wall
     - -fwarn-tabs
     - -O2
@@ -58,23 +61,23 @@ executables:
     - xmobar
     - xmonanza
 
-tests:
-  test:
-    main:                Spec.hs
-    source-dirs:         test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - xmonanza
-  benchmark:
-    main:                Spec.hs
-    source-dirs:         benchmark
-    ghc-options:
-    - -Wall
-    - -fwarn-tabs
-    - -O2
-    dependencies:
-    - xmonanza
-    - criterion
+# tests:
+#   test:
+#     main:                Spec.hs
+#     source-dirs:         test
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     dependencies:
+#     - xmonanza
+#   benchmark:
+#     main:                Spec.hs
+#     source-dirs:         benchmark
+#     ghc-options:
+#     - -Wall
+#     - -fwarn-tabs
+#     - -O2
+#     dependencies:
+#     - xmonanza
+#     - criterion

@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: nightly-2021-12-30
+resolver: nightly-2022-02-19
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -41,14 +41,15 @@ packages:
 #
 # extra-deps: []
 extra-deps:
-- xmobar-0.40
+- xmobar-0.41
 rebuild-ghc-options: true
 flags:
   xmobar:
     with_xft: true
     with_alsa: true
 nix:
-  # enable: true
+  #enable: true
+  add-gc-roots: true
   pure: true
   # packages:
   #   - haskellPackages.xmonad
