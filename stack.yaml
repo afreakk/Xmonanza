@@ -49,6 +49,7 @@ flags:
     with_alsa: true
 nix:
   #enable: true
+  # shell-file: shell.nix
   add-gc-roots: true
   pure: true
   # packages:

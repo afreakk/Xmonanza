@@ -39,6 +39,7 @@ import Utils (floatingTermClass, alacrittyFloatingOpt)
 import XMonad.Layout.LayoutModifier
 import qualified XMonad.Util.Run as XUR
 import qualified XMonad.Actions.EasyMotion as EM
+import XMonad.Hooks.TaffybarPagerHints (pagerHints)
 
 newtype ModeName
  = ModeName {getModeName :: Maybe String}
@@ -393,7 +394,15 @@ main :: IO ()
 main = do
   -- xmobarproc <- spawnPipe "~/.local/bin/xmobar-afreak"
   cfg <- getConfig
-  xmonad . SB.withSB (mySB cfg) . EWMH.ewmhFullscreen . applyRefocusLastHooks . withUrgencyHook NoUrgencyHook . MD.docks $ defaults cfg
+  xmonad . 
+  --SB.withSB (mySB cfg) . 
+      workspaceNamesEwmh .
+      EWMH.ewmhFullscreen .
+      EWMH.ewmh .
+      applyRefocusLastHooks .
+      withUrgencyHook NoUrgencyHook .
+      MD.docks .
+      pagerHints $ defaults cfg
 
 applyRefocusLastHooks :: XConfig l -> XConfig (ModifiedLayout RefocusLastLayoutHook l)
 applyRefocusLastHooks c = c { handleEventHook = handleEventHook c <+> refocusLastWhen isFloat
